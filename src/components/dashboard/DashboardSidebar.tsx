@@ -24,11 +24,12 @@ import {
   PenTool
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useAuth, authClient } from "@/lib/auth-client";
+import { authClient } from "@/lib/auth-client";
 import type { LucideIcon } from "lucide-react";
+import type { Role } from "@/types";
 
 interface SidebarProps {
-  role: "USER" | "ADMIN" | "MANAGER";
+  role: Role;
   className?: string;
 }
 
@@ -90,9 +91,15 @@ export function DashboardSidebar({ role, className }: SidebarProps) {
     { label: "Settings", icon: Settings, href: "/admin/settings" },
   ];
 
-  const currentLinks = role === "ADMIN" ? adminLinks : role === "MANAGER" ? instructorLinks : studentLinks;
+  const currentLinks =
+    role === "ADMIN"
+      ? adminLinks
+      : role === "MANAGER" || role === "INSTRUCTOR"
+        ? instructorLinks
+        : studentLinks;
 
-  const brandHref = role === "ADMIN" ? "/admin" : role === "MANAGER" ? "/manager" : "/user";
+  const brandHref =
+    role === "ADMIN" ? "/admin" : role === "MANAGER" || role === "INSTRUCTOR" ? "/manager" : "/user";
 
   return (
     <aside className={cn("w-[280px] border-r border-border bg-card flex flex-col h-screen sticky top-0 z-50", className)}>

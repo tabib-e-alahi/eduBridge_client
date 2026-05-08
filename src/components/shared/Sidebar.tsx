@@ -4,8 +4,6 @@ import { usePathname } from "next/navigation";
 import { 
   LayoutDashboard, 
   BookOpen, 
-  Clock, 
-  CheckSquare, 
   MessageSquare, 
   Award, 
   Settings,
@@ -18,10 +16,10 @@ import {
   Users
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { hasPermission, Permission, PERMISSIONS } from "@/lib/permissions";
+import type { Role } from "@/types";
 
 interface SidebarProps {
-  role: "USER" | "ADMIN" | "MANAGER";
+  role: Role;
 }
 
 export function Sidebar({ role }: SidebarProps) {
@@ -69,7 +67,7 @@ export function Sidebar({ role }: SidebarProps) {
           );
         })}
 
-        {role === "MANAGER" && (
+        {(role === "MANAGER" || role === "INSTRUCTOR") && (
            <>
               <div className="pt-6 px-3 pb-2 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Management</div>
               <Link href="/manager" className={cn("sidebar-item", pathname.startsWith("/manager") ? "sidebar-item-active" : "sidebar-item-inactive")}>

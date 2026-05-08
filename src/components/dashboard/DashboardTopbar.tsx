@@ -1,6 +1,6 @@
 "use client";
 
-import { Search, Bell, User as UserIcon, Menu, Settings, LogOut } from "lucide-react";
+import { Search, User as UserIcon, Menu, Settings, LogOut } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { ModeToggle } from "@/components/shared/ModeToggle";
 import { NotificationBell } from "@/components/shared/NotificationBell";
@@ -18,9 +18,10 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { DashboardSidebar } from "./DashboardSidebar";
 import { authClient } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
+import type { Role } from "@/types";
 
 interface TopbarProps {
-  role: "USER" | "ADMIN" | "MANAGER";
+  role: Role;
 }
 
 export function DashboardTopbar({ role }: TopbarProps) {
@@ -30,7 +31,7 @@ export function DashboardTopbar({ role }: TopbarProps) {
     await authClient.signOut({
       fetchOptions: {
         onSuccess: () => {
-          router.push("/auth/login");
+          router.push("/login");
         },
       },
     });

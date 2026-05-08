@@ -1,8 +1,10 @@
+export type Role = 'STUDENT' | 'INSTRUCTOR' | 'MANAGER' | 'ADMIN';
+
 export interface User {
   id: string;
   name: string;
   email: string;
-  role: 'STUDENT' | 'INSTRUCTOR' | 'MANAGER' | 'ADMIN';
+  role: Role;
   image?: string;
 }
 

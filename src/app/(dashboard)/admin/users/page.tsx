@@ -99,8 +99,9 @@ export default function AdminUsersPage() {
                     </SelectTrigger>
                     <SelectContent>
                        <SelectItem value="ALL">All Roles</SelectItem>
-                       <SelectItem value="USER">Students</SelectItem>
-                       <SelectItem value="MANAGER">Instructors</SelectItem>
+                       <SelectItem value="STUDENT">Students</SelectItem>
+                       <SelectItem value="INSTRUCTOR">Instructors</SelectItem>
+                       <SelectItem value="MANAGER">Managers</SelectItem>
                        <SelectItem value="ADMIN">Admins</SelectItem>
                     </SelectContent>
                  </Select>
@@ -158,7 +159,7 @@ export default function AdminUsersPage() {
                              <DropdownMenuItem className="gap-2">
                                 <Eye className="h-4 w-4" /> View Profile
                              </DropdownMenuItem>
-                             <DropdownMenuItem className="gap-2" onClick={() => handleRoleUpdate(user.id, "MANAGER")}>
+                             <DropdownMenuItem className="gap-2" onClick={() => handleRoleUpdate(user.id, "INSTRUCTOR")}>
                                 <Shield className="h-4 w-4" /> Change to Instructor
                              </DropdownMenuItem>
                              <DropdownMenuSeparator />

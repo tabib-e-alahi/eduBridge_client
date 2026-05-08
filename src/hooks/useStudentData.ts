@@ -664,3 +664,41 @@ export const useToggleSaveCourse = () => {
     },
   });
 };
+
+// =============================================
+// CERTIFICATES
+// =============================================
+
+export interface Certificate {
+  id: string;
+  grade: number;
+  issuedAt: string;
+  certificateNumber: string;
+  verificationHash: string;
+  status: 'ISSUED' | 'REVOKED';
+  pdfUrl?: string | null;
+  course: {
+    title: string;
+    instructor?: { name: string };
+    category?: { name: string };
+  };
+}
+
+export interface InProgressEnrollment {
+  id: string;
+  progress: number;
+  status: string;
+  course: { title: string };
+}
+
+export const useMyCertificates = () => {
+  return useQuery({
+    queryKey: ['my-certificates'],
+    queryFn: async () => {
+      const { data } = await api.get<ApiResponse<{ earned: Certificate[]; inProgress: InProgressEnrollment[] }>>(
+        '/certificates/my'
+      );
+      return data;
+    },
+  });
+};

@@ -27,7 +27,7 @@ import { useRouter } from "next/navigation";
 export function Navbar() {
   const { data: session, isPending } = useAuth();
   const isLoggedIn = !!session;
-  const role = (session?.user as any)?.role || "USER";
+  const role = (session?.user as any)?.role || "STUDENT";
   const router = useRouter();
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);

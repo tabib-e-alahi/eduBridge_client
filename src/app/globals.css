@@ -148,14 +148,14 @@
 @layer utilities {
   /* Professional SaaS Components */
   .lms-card {
-    @apply bg-card border border-border shadow-inner rounded-lg transition-all duration-200;
+    @apply rounded-2xl border border-border bg-card shadow-sm transition-shadow;
   }
   .card-box-shadow{
     box-shadow: 0 6px 20px -10px hsl(210, 15%, 55%);
   }
 
   .lms-card-hover {
-    @apply hover:shadow-md hover:border-primary/20 cursor-pointer;
+    @apply hover:shadow-md cursor-pointer;
   }
 
   .sidebar-item {
