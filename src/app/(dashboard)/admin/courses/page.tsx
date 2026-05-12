@@ -14,7 +14,9 @@ import {
   Clock,
   BookMarked,
   MoreVertical,
-  AlertTriangle
+  AlertTriangle,
+  Users,
+  TrendingUp
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -88,7 +90,7 @@ export default function AdminAllCoursesPage() {
          </div>
          <div className="flex items-center gap-3 w-full md:w-auto overflow-x-auto">
             <div className="flex bg-background rounded-[0.75rem] p-1 border border-muted-foreground/10 min-w-max">
-               {["ALL", "PUBLISHED", "IN_REVIEW", "DRAFT"].map((filter) => (
+               {["ALL", "PUBLISHED", "IN_REVIEW", "DRAFT", "REJECTED"].map((filter) => (
                  <Button 
                    key={filter}
                    variant={statusFilter === filter ? 'secondary' : 'ghost'} 
@@ -112,8 +114,8 @@ export default function AdminAllCoursesPage() {
                 <th className="px-6 py-5">Course Details</th>
                 <th className="px-6 py-5">Instructor</th>
                 <th className="px-6 py-5">Engagement</th>
-                <th className="px-6 py-5">Status</th>
-                <th className="px-6 py-5 text-right">Actions</th>
+                <th className="px-6 py-5">Status & Actions</th>
+                <th className="px-6 py-5 text-right">More</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-muted-foreground/10">
@@ -146,7 +148,46 @@ export default function AdminAllCoursesPage() {
                      </div>
                   </td>
                   <td className="px-6 py-4">
-                    {getStatusBadge(course.status)}
+                     <div className="flex items-center gap-2">
+                        {getStatusBadge(course.status)}
+                        
+                        {/* Quick Actions Bar */}
+                        <div className="flex items-center gap-1 ml-2">
+                           {course.status !== 'PUBLISHED' && (
+                              <Button 
+                                variant="secondary" 
+                                size="sm" 
+                                className="h-7 px-3 text-[9px] font-black uppercase tracking-widest text-emerald-600 bg-emerald-500/10 hover:bg-emerald-500/20 rounded-md gap-1 border-none shadow-none"
+                                onClick={() => updateStatusMutation.mutate({ id: course.id, status: 'PUBLISHED' })}
+                                disabled={updateStatusMutation.isPending}
+                              >
+                                 <CheckCircle2 className="h-3.5 w-3.5" /> Approve
+                              </Button>
+                           )}
+                           {course.status === 'PUBLISHED' && (
+                              <Button 
+                                variant="secondary" 
+                                size="sm" 
+                                className="h-7 px-3 text-[9px] font-black uppercase tracking-widest text-amber-600 bg-amber-500/10 hover:bg-amber-500/20 rounded-md gap-1 border-none shadow-none"
+                                onClick={() => updateStatusMutation.mutate({ id: course.id, status: 'DRAFT' })}
+                                disabled={updateStatusMutation.isPending}
+                              >
+                                 <Clock className="h-3.5 w-3.5" /> Revert
+                              </Button>
+                           )}
+                           {course.status !== 'REJECTED' && course.status !== 'PUBLISHED' && (
+                              <Button 
+                                variant="secondary" 
+                                size="sm" 
+                                className="h-7 px-3 text-[9px] font-black uppercase tracking-widest text-destructive bg-destructive/10 hover:bg-destructive/20 rounded-md gap-1 border-none shadow-none"
+                                onClick={() => updateStatusMutation.mutate({ id: course.id, status: 'REJECTED' })}
+                                disabled={updateStatusMutation.isPending}
+                              >
+                                 <XCircle className="h-3.5 w-3.5" /> Reject
+                              </Button>
+                           )}
+                        </div>
+                     </div>
                   </td>
                   <td className="px-6 py-4 text-right">
                      <DropdownMenu>
@@ -166,30 +207,35 @@ export default function AdminAllCoursesPage() {
                            
                            <DropdownMenuSeparator />
                            <DropdownMenuLabel className="px-2 py-1.5 text-[10px] uppercase tracking-widest text-muted-foreground">Status Controls</DropdownMenuLabel>
-                           {course.status !== 'PUBLISHED' && (
-                              <DropdownMenuItem 
-                                 className="gap-2 text-emerald-600 focus:text-emerald-600 cursor-pointer"
-                                 onClick={() => updateStatusMutation.mutate({ id: course.id, status: 'PUBLISHED' })}
-                              >
-                                 <CheckCircle2 className="h-4 w-4" /> Approve & Publish
-                              </DropdownMenuItem>
-                           )}
-                           {course.status === 'IN_REVIEW' && (
-                              <DropdownMenuItem 
-                                 className="gap-2 text-destructive focus:text-destructive cursor-pointer"
-                                 onClick={() => updateStatusMutation.mutate({ id: course.id, status: 'REJECTED' })}
-                              >
-                                 <XCircle className="h-4 w-4" /> Reject Draft
-                              </DropdownMenuItem>
-                           )}
-                           {course.status === 'PUBLISHED' && (
-                              <DropdownMenuItem 
-                                 className="gap-2 text-amber-600 focus:text-amber-600 cursor-pointer"
-                                 onClick={() => updateStatusMutation.mutate({ id: course.id, status: 'DRAFT' })}
-                              >
-                                 <AlertTriangle className="h-4 w-4" /> Revert to Draft
-                              </DropdownMenuItem>
-                           )}
+                           
+                           {/* All transitions exposed in dropdown as well */}
+                           <DropdownMenuItem 
+                              className="gap-2 text-emerald-600 focus:text-emerald-600 cursor-pointer"
+                              onClick={() => updateStatusMutation.mutate({ id: course.id, status: 'PUBLISHED' })}
+                           >
+                              <CheckCircle2 className="h-4 w-4" /> Force Publish
+                           </DropdownMenuItem>
+                           
+                           <DropdownMenuItem 
+                              className="gap-2 text-amber-600 focus:text-amber-600 cursor-pointer"
+                              onClick={() => updateStatusMutation.mutate({ id: course.id, status: 'DRAFT' })}
+                           >
+                              <Clock className="h-4 w-4" /> Move to Draft
+                           </DropdownMenuItem>
+                           
+                           <DropdownMenuItem 
+                              className="gap-2 text-destructive focus:text-destructive cursor-pointer"
+                              onClick={() => updateStatusMutation.mutate({ id: course.id, status: 'REJECTED' })}
+                           >
+                              <XCircle className="h-4 w-4" /> Block Course
+                           </DropdownMenuItem>
+
+                           <DropdownMenuItem 
+                              className="gap-2 text-blue-600 focus:text-blue-600 cursor-pointer"
+                              onClick={() => updateStatusMutation.mutate({ id: course.id, status: 'IN_REVIEW' })}
+                           >
+                              <TrendingUp className="h-4 w-4" /> Reset to Review
+                           </DropdownMenuItem>
                         </DropdownMenuContent>
                      </DropdownMenu>
                   </td>

@@ -29,7 +29,8 @@ import {
   Rocket,
   Image as ImageIcon,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  Upload
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -70,17 +71,54 @@ export default function EditCoursePage() {
   const [courseForm, setCourseForm] = useState<any>(null);
   const [isLessonDialogOpen, setIsLessonDialogOpen] = useState(false);
   const [editingLesson, setEditingLesson] = useState<any>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [localPreview, setLocalPreview] = useState<string | null>(null);
 
   useEffect(() => {
     if (courseData?.data) {
-      setCourseForm(courseData.data);
+      setCourseForm({
+        ...courseData.data,
+        categoryId: courseData.data.category?.id || ""
+      });
     }
   }, [courseData]);
+
+  const handleThumbnailUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 1024 * 1024) {
+      toast.error("Image size must be less than 1MB");
+      return;
+    }
+
+    setLocalPreview(URL.createObjectURL(file));
+    setIsUploading(true);
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("upload_preset", "edubridge_preset");
+
+    try {
+      const res = await fetch(`https://api.cloudinary.com/v1_1/dwx69v7pa/image/upload`, {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      if (data.secure_url) {
+        setCourseForm({ ...courseForm, thumbnailUrl: data.secure_url });
+        toast.success("Thumbnail uploaded successfully!");
+      }
+    } catch (error) {
+      toast.error("Upload failed. Please try again.");
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   if (isLoading) return <Loading />;
   if (isError || !courseForm) return <ErrorState onRetry={() => refetch()} />;
 
-  const course = courseData.data;
+  const course = courseData?.data;
 
   const handleUpdateCourse = () => {
     updateCourseMutation.mutate({ 
@@ -107,7 +145,7 @@ export default function EditCoursePage() {
       videoUrl: formData.get("videoUrl") as string,
       duration: formData.get("duration") as string,
       content: formData.get("content") as string,
-      order: editingLesson ? editingLesson.order : (course.lessons?.length || 0) + 1,
+      order: editingLesson ? editingLesson.order : (course?.lessons?.length || 0) + 1,
       courseId: id
     };
 
@@ -142,19 +180,19 @@ export default function EditCoursePage() {
            </Button>
            <div>
               <div className="flex items-center gap-2">
-                 <h1 className="text-3xl font-black tracking-tight">{course.title}</h1>
+                 <h1 className="text-3xl font-black tracking-tight">{course?.title}</h1>
                  <Badge variant="outline" className={cn(
                     "font-bold uppercase text-[10px] tracking-widest",
-                    course.status === 'PUBLISHED' ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" : "bg-amber-500/10 text-amber-600 border-amber-500/20"
+                    courseForm.status === 'PUBLISHED' ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" : "bg-amber-500/10 text-amber-600 border-amber-500/20"
                  )}>
-                    {course.status}
+                    {courseForm.status}
                  </Badge>
               </div>
-              <p className="text-muted-foreground font-medium">Draft ID: {id.slice(0, 8)} • Last updated {new Date(course.updatedAt).toLocaleDateString()}</p>
+              <p className="text-muted-foreground font-medium">Draft ID: {id.slice(0, 8)} • Last updated {course?.updatedAt ? new Date(course.updatedAt).toLocaleDateString() : 'N/A'}</p>
            </div>
         </div>
         <div className="flex gap-3">
-           <Button variant="outline" className="font-bold h-11 rounded-[0.75rem]" onClick={() => window.open(`/learn/${course.slug}`, '_blank')}>
+           <Button variant="outline" className="font-bold h-11 rounded-[0.75rem]" onClick={() => window.open(`/learn/${course?.slug}`, '_blank')}>
               Preview Course
            </Button>
            <Button className="font-black h-11 px-8 rounded-[0.75rem] gap-2 shadow-lg shadow-primary/20" onClick={handleUpdateCourse} disabled={updateCourseMutation.isPending}>
@@ -164,7 +202,7 @@ export default function EditCoursePage() {
         </div>
       </div>
 
-      <Tabs defaultValue="curriculum" className="w-full">
+      <Tabs defaultValue="info" className="w-full">
         <TabsList className="bg-muted/50 p-1 rounded-[0.75rem] h-12 mb-8 border border-muted-foreground/10">
           <TabsTrigger value="info" className="rounded-[0.625rem] px-8 font-bold data-[state=active]:bg-background data-[state=active]:shadow-sm">General Info</TabsTrigger>
           <TabsTrigger value="curriculum" className="rounded-[0.625rem] px-8 font-bold data-[state=active]:bg-background data-[state=active]:shadow-sm">Curriculum</TabsTrigger>
@@ -180,6 +218,29 @@ export default function EditCoursePage() {
                        <CardTitle className="text-lg font-black flex items-center gap-2"><Layout className="h-5 w-5 text-primary" /> Visual Identity</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-6">
+                        {/* Status Toggle Bar */}
+                        <div className="flex justify-between items-center bg-primary/5 p-4 rounded-[0.75rem] border border-primary/20 mb-6">
+                           <div>
+                              <p className="text-xs font-black uppercase tracking-widest text-primary">Publication Status</p>
+                              <p className="text-sm font-bold mt-0.5">Currently: <Badge variant="outline" className="ml-1 uppercase text-[10px]">{courseForm.status}</Badge></p>
+                           </div>
+                           <Button 
+                             onClick={() => {
+                                const newStatus = courseForm.status === 'PUBLISHED' ? 'DRAFT' : 'PUBLISHED';
+                                setCourseForm({...courseForm, status: newStatus});
+                                updateCourseMutation.mutate({ id, payload: { status: newStatus } });
+                             }}
+                             className={cn(
+                               "font-black h-10 px-6 rounded-[0.625rem] gap-2",
+                               courseForm.status === 'PUBLISHED' ? "bg-amber-500 hover:bg-amber-600 text-white" : "bg-emerald-600 hover:bg-emerald-700 text-white"
+                             )}
+                             disabled={updateCourseMutation.isPending}
+                           >
+                              {courseForm.status === 'PUBLISHED' ? <AlertCircle className="h-4 w-4" /> : <CheckCircle2 className="h-4 w-4" />}
+                              {courseForm.status === 'PUBLISHED' ? 'Take Offline' : 'Publish Live'}
+                           </Button>
+                        </div>
+
                        <div className="space-y-2">
                           <Label className="font-bold text-xs uppercase tracking-widest text-muted-foreground">Course Title</Label>
                           <Input 
@@ -213,16 +274,29 @@ export default function EditCoursePage() {
 
               <div className="space-y-6">
                  <Card className="saas-card border-muted-foreground/10 overflow-hidden !p-0">
-                    <div className="aspect-video bg-muted relative">
-                       {courseForm.thumbnailUrl ? (
-                         <img src={courseForm.thumbnailUrl} className="object-cover w-full h-full" alt="" />
+                    <div className="aspect-video bg-muted relative group cursor-pointer" onClick={() => document.getElementById('thumbnail-upload')?.click()}>
+                       {localPreview || courseForm.thumbnailUrl ? (
+                          <>
+                             <img src={localPreview || courseForm.thumbnailUrl} className="object-cover w-full h-full" alt="" />
+                             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                <Upload className="h-8 w-8 text-white" />
+                             </div>
+                          </>
                        ) : (
-                         <div className="h-full w-full flex flex-col items-center justify-center gap-2 opacity-30">
-                            <ImageIcon className="h-10 w-10" />
-                            <span className="text-[10px] font-black uppercase">No Image</span>
-                         </div>
+                          <div className="h-full w-full flex flex-col items-center justify-center gap-2 opacity-30 text-center">
+                             {isUploading ? <Loading /> : <ImageIcon className="h-10 w-10" />}
+                             <span className="text-[10px] font-black uppercase">{isUploading ? 'Uploading...' : 'No Image'}</span>
+                             <span className="text-[8px] font-bold">MAX SIZE: 1MB</span>
+                          </div>
                        )}
                     </div>
+                    <input 
+                       id="thumbnail-upload"
+                       type="file" 
+                       className="hidden" 
+                       accept="image/*" 
+                       onChange={handleThumbnailUpload} 
+                    />
                     <div className="p-6 space-y-4">
                        <div className="space-y-2">
                           <Label className="font-bold text-xs uppercase tracking-widest text-muted-foreground">Thumbnail URL</Label>
@@ -243,7 +317,7 @@ export default function EditCoursePage() {
                     <CardContent className="space-y-6">
                        <div className="space-y-2">
                           <Label className="font-bold text-xs uppercase tracking-widest text-muted-foreground">Academic Category</Label>
-                          <Select value={courseForm.categoryId} onValueChange={(val) => setCourseForm({...courseForm, categoryId: val})}>
+                          <Select value={courseForm.categoryId} onValueChange={(val) => setCourseForm({...courseForm, categoryId: val || ""})}>
                              <SelectTrigger className="h-11 rounded-[0.625rem] bg-muted/20 font-bold border-none">
                                 <SelectValue placeholder="Select category" />
                              </SelectTrigger>
@@ -256,7 +330,7 @@ export default function EditCoursePage() {
                        </div>
                        <div className="space-y-2">
                           <Label className="font-bold text-xs uppercase tracking-widest text-muted-foreground">Difficulty Level</Label>
-                          <Select value={courseForm.level} onValueChange={(val) => setCourseForm({...courseForm, level: val})}>
+                          <Select value={courseForm.level} onValueChange={(val) => setCourseForm({...courseForm, level: val || ""})}>
                              <SelectTrigger className="h-11 rounded-[0.625rem] bg-muted/20 font-bold border-none">
                                 <SelectValue placeholder="Select level" />
                              </SelectTrigger>
@@ -290,14 +364,14 @@ export default function EditCoursePage() {
               <div className="flex justify-between items-center bg-card p-6 rounded-[1rem] border border-muted-foreground/10 shadow-sm">
                  <div>
                     <h2 className="text-xl font-black">Syllabus Structure</h2>
-                    <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mt-1">Total Content: {course.lessons?.length || 0} Modules</p>
+                    <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mt-1">Total Content: {course?.lessons?.length || 0} Modules</p>
                  </div>
                  <Dialog open={isLessonDialogOpen} onOpenChange={(open) => { setIsLessonDialogOpen(open); if(!open) setEditingLesson(null); }}>
-                    <DialogTrigger asChild>
+                    <DialogTrigger render={
                        <Button className="font-black gap-2 h-11 px-6 rounded-[0.625rem] shadow-lg shadow-primary/20">
                           <Plus className="h-5 w-5" /> Add New Module
                        </Button>
-                    </DialogTrigger>
+                    } />
                     <DialogContent className="max-w-2xl rounded-[1rem] p-0 overflow-hidden">
                        <DialogHeader className="p-6 bg-muted/20 border-b">
                           <DialogTitle className="text-2xl font-black">{editingLesson ? 'Edit Module' : 'Add New Curriculum Module'}</DialogTitle>
@@ -335,7 +409,7 @@ export default function EditCoursePage() {
               </div>
 
               <div className="space-y-4">
-                 {course.lessons?.map((lesson: any, i: number) => (
+                 {course?.lessons?.map((lesson: any, i: number) => (
                     <div key={lesson.id} className="saas-card flex items-center gap-6 group hover:border-primary/40 transition-all border-muted-foreground/10 bg-card">
                        <div className="h-12 w-12 rounded-[0.75rem] bg-primary/5 flex items-center justify-center shrink-0 text-primary group-hover:bg-primary group-hover:text-white transition-all">
                           <span className="font-black text-lg">{i + 1}</span>
@@ -370,7 +444,7 @@ export default function EditCoursePage() {
                        </div>
                     </div>
                  ))}
-                 {(!course.lessons || course.lessons.length === 0) && (
+                 {(!course?.lessons || course.lessons.length === 0) && (
                     <div className="py-20 text-center saas-card bg-transparent border-dashed border-2 flex flex-col items-center gap-4 border-muted-foreground/20">
                        <BookOpen className="h-12 w-12 text-muted-foreground opacity-20" />
                        <h3 className="text-xl font-bold">Curriculum is empty</h3>
@@ -394,7 +468,7 @@ export default function EditCoursePage() {
                  </CardHeader>
                  <CardContent className="p-0">
                     <div className="space-y-4">
-                       {course.assignments?.map((ass: any) => (
+                       {course?.assignments?.map((ass: any) => (
                           <div key={ass.id} className="p-4 rounded-[0.75rem] border bg-muted/10 flex items-center justify-between">
                              <div className="flex items-center gap-3">
                                 <FileText className="h-5 w-5 text-primary" />
@@ -403,7 +477,7 @@ export default function EditCoursePage() {
                              <Badge variant="secondary" className="font-black text-[9px] uppercase">{ass.type || 'Standard'}</Badge>
                           </div>
                        ))}
-                       {!course.assignments?.length && <p className="text-center py-10 text-muted-foreground text-sm font-bold uppercase tracking-widest opacity-40 italic">No Assignments Defined</p>}
+                       {!course?.assignments?.length && <p className="text-center py-10 text-muted-foreground text-sm font-bold uppercase tracking-widest opacity-40 italic">No Assignments Defined</p>}
                     </div>
                  </CardContent>
               </Card>
@@ -418,7 +492,7 @@ export default function EditCoursePage() {
                  </CardHeader>
                  <CardContent className="p-0">
                     <div className="space-y-4">
-                       {course.quizzes?.map((quiz: any) => (
+                       {course?.quizzes?.map((quiz: any) => (
                           <div key={quiz.id} className="p-4 rounded-[0.75rem] border bg-muted/10 flex items-center justify-between">
                              <div className="flex items-center gap-3">
                                 <CheckCircle2 className="h-5 w-5 text-amber-500" />
@@ -427,7 +501,7 @@ export default function EditCoursePage() {
                              <Badge variant="secondary" className="font-black text-[9px] uppercase">{quiz.questionsCount || 0} Qs</Badge>
                           </div>
                        ))}
-                       {!course.quizzes?.length && <p className="text-center py-10 text-muted-foreground text-sm font-bold uppercase tracking-widest opacity-40 italic">No Quizzes Defined</p>}
+                       {!course?.quizzes?.length && <p className="text-center py-10 text-muted-foreground text-sm font-bold uppercase tracking-widest opacity-40 italic">No Quizzes Defined</p>}
                     </div>
                  </CardContent>
               </Card>
@@ -458,7 +532,11 @@ export default function EditCoursePage() {
                        <Button 
                          variant={courseForm.status === 'PUBLISHED' ? 'outline' : 'default'} 
                          className="font-black rounded-[0.5rem]"
-                         onClick={() => setCourseForm({...courseForm, status: courseForm.status === 'PUBLISHED' ? 'DRAFT' : 'PUBLISHED'})}
+                         onClick={() => {
+                            const newStatus = courseForm.status === 'PUBLISHED' ? 'DRAFT' : 'PUBLISHED';
+                            setCourseForm({...courseForm, status: newStatus});
+                            updateCourseMutation.mutate({ id, payload: { status: newStatus } });
+                         }}
                        >
                           {courseForm.status === 'PUBLISHED' ? 'Take Offline' : 'Publish Live'}
                        </Button>

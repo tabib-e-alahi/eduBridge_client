@@ -44,6 +44,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { User, Course } from "@/types";
+import { cn } from "@/lib/utils";
 
 export default function AdminDashboardPage() {
   const { data, isLoading, isError, refetch } = useAdminDashboard();

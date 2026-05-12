@@ -52,11 +52,11 @@ export default function MentorsPage() {
   return (
     <div className="flex flex-col min-h-screen bg-background">
       {/* Header Section - Modern SaaS */}
-      <section className="bg-card border-b border-border pt-28 pb-12">
+      <section className=" border-b border-border pt-28 pb-6">
         <div className="container mx-auto px-4 md:px-6">
           <div className="max-w-3xl space-y-4">
-            <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-foreground">Our Mentors</h1>
-            <p className="text-lg text-muted-foreground">Connect with industry professionals who have built systems at top global companies. Get 1-on-1 guidance, code reviews, and career advice.</p>
+            <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground">Our Mentors</h1>
+            <p className="text-normal text-muted-foreground">Connect with industry professionals who have built systems at top global companies. Get 1-on-1 guidance, code reviews, and career advice.</p>
           </div>
           
           <div className="flex flex-col sm:flex-row gap-4 max-w-2xl mt-8">
@@ -64,12 +64,12 @@ export default function MentorsPage() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
               <Input 
                 placeholder="Search mentors by name, role, or expertise..." 
-                className="h-12 pl-10 rounded-[0.625rem] bg-background border-border shadow-sm focus-visible:ring-primary font-medium"
+                className="h-12 pl-10 rounded-lg bg-background border-border shadow-sm focus-visible:ring-primary font-medium"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
-            <Button size="lg" variant="outline" className="h-12 rounded-[0.625rem] font-bold gap-2">
+            <Button size="lg" variant="outline" className="h-12 rounded-lg font-bold gap-2">
               <Filter className="h-4 w-4 text-muted-foreground" /> Filter
             </Button>
           </div>
@@ -77,11 +77,11 @@ export default function MentorsPage() {
       </section>
 
       {/* Mentors Grid */}
-      <section className="py-12 bg-background">
+      <section className="py-12">
         <div className="container mx-auto px-4 md:px-6">
           <motion.div 
             layout
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 3xl:grid-cols-5 gap-6"
           >
             <AnimatePresence>
               {filteredMentors.map((mentor, i) => (
@@ -92,7 +92,7 @@ export default function MentorsPage() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.95 }}
                   transition={{ delay: i * 0.05 }}
-                  className="saas-card rounded-[0.625rem] flex flex-col group overflow-hidden"
+                  className="lms-card lms-card-hover card-box-shadow"
                 >
                   <div className="p-6 flex flex-col gap-5 flex-1">
                      <div className="flex items-start justify-between">
@@ -161,7 +161,7 @@ export default function MentorsPage() {
             <motion.div 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="py-32 text-center flex flex-col items-center justify-center saas-card rounded-[0.625rem] mt-6"
+              className="py-32 text-center flex flex-col items-center justify-center saas-card rounded-lg mt-6"
             >
                <div className="h-16 w-16 bg-muted rounded-2xl flex items-center justify-center mb-4">
                   <Search className="h-8 w-8 text-muted-foreground" />
@@ -177,7 +177,7 @@ export default function MentorsPage() {
       {/* Final CTA */}
       <section className="py-24 bg-[#FDFCF8] dark:bg-[#262626] border-t border-border mt-auto">
         <div className="container mx-auto px-4 md:px-6">
-           <div className="max-w-4xl mx-auto bg-primary rounded-[1rem] p-10 md:p-16 text-center text-primary-foreground shadow-xl shadow-primary/20 space-y-8 relative overflow-hidden">
+           <div className="max-w-4xl mx-auto bg-primary rounded-2xl p-10 md:p-16 text-center text-primary-foreground shadow-xl shadow-primary/20 space-y-8 relative overflow-hidden">
               <div className="relative z-10 space-y-4">
                  <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight">Become a Mentor</h2>
                  <p className="text-lg text-primary-foreground/80 font-medium max-w-2xl mx-auto">

@@ -33,6 +33,8 @@ import {
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
+import { Loading } from "@/components/shared/Loading";
+import { ErrorState } from "@/components/shared/ErrorState";
 
 export default function AssignmentsPage() {
   const [searchQuery, setSearchQuery] = useState("");

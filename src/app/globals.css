@@ -109,7 +109,7 @@
     --popover: hsl(0, 0%, 20%);
     --popover-foreground: hsl(0, 0%, 98%);
 
-    --primary: hsl(217, 91%, 65%); /* Bright Blue for contrast */
+    --primary: hsl(217, 83%, 58%); /* Bright Blue for contrast */
     --primary-foreground: hsl(0, 0%, 10%); /* Dark text on primary button */
 
     --secondary: hsl(0, 0%, 25%); /* #404040 */
@@ -148,7 +148,10 @@
 @layer utilities {
   /* Professional SaaS Components */
   .lms-card {
-    @apply bg-card border border-border shadow-sm rounded-[0.625rem] transition-all duration-200;
+    @apply bg-card border border-border shadow-inner rounded-lg transition-all duration-200;
+  }
+  .card-box-shadow{
+    box-shadow: 0 6px 20px -10px hsl(210, 15%, 55%);
   }
 
   .lms-card-hover {

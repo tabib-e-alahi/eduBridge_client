@@ -8,12 +8,9 @@ import {
   Star,
   MessageSquare,
   Plus,
-  ArrowRight,
-  DollarSign,
   TrendingUp,
   Award,
-  MoreVertical,
-  ArrowUpRight
+  ExternalLink
 } from "lucide-react";
 import {
   Bar,
@@ -30,181 +27,247 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { cn } from "@/lib/utils";
 
+import { useAuth } from "@/lib/auth-client";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+
 export default function InstructorDashboardPage() {
+  const { data: session, isPending: isAuthLoading } = useAuth();
+  const router = useRouter();
   const { data: dashboardData, isLoading, isError, refetch } = useInstructorDashboard();
 
-  if (isLoading) return <Loading />;
+  useEffect(() => {
+    if (!isAuthLoading && !session) {
+      router.push("/auth/login");
+    } else if (session && !["INSTRUCTOR", "MANAGER", "ADMIN"].includes((session.user as any).role)) {
+      router.push("/dashboard");
+    }
+  }, [session, isAuthLoading, router]);
+
+  if (isLoading || isAuthLoading) return <Loading />;
   if (isError) return <ErrorState onRetry={() => refetch()} />;
 
   const { stats, courses, recentEnrollments, recentReviews, charts } = dashboardData?.data || {};
   const COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#8b5cf6", "#ef4444"];
 
   return (
-    <div className="space-y-12 animate-in fade-in duration-500">
-      <PageHeader 
-        title="Studio" 
-        subtitle="Your high-impact educational command center."
-        actions={
-          <>
-            <Button variant="outline" className="font-bold h-10 px-4 rounded-lg">
-               Export Data
+    <div className="flex flex-col gap-8">
+      
+      {/* Header Section */}
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold text-foreground">Studio</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Overview of your performance and recent activity.
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <Button variant="outline" className="text-sm font-medium">
+            Export Data
+          </Button>
+          <Link href="/manager/courses/create">
+            <Button className="text-sm font-medium gap-2">
+              <Plus className="h-4 w-4" /> Create Course
             </Button>
-            <Link href="/manager/courses/create">
-              <Button className="font-bold h-10 px-6 rounded-lg gap-2">
-                  <Plus className="h-4 w-4" /> Create Course
-              </Button>
-            </Link>
-          </>
-        }
-      />
+          </Link>
+        </div>
+      </div>
 
       {/* Stats Grid */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {[
-          { label: "Total Revenue", value: `$${stats?.totalRevenue?.toLocaleString() || '0'}`, icon: DollarSign, color: "text-emerald-500", bg: "bg-emerald-500/10", trend: "+12.5%" },
-          { label: "Active Students", value: stats?.totalStudents || 0, icon: Users, color: "text-blue-500", bg: "bg-blue-500/10", trend: "+5.2%" },
-          { label: "Avg. Rating", value: stats?.avgRating || 0, icon: Star, color: "text-amber-500", bg: "bg-amber-500/10", trend: "Stable" },
-          { label: "Total Reviews", value: stats?.totalReviews || 0, icon: MessageSquare, color: "text-purple-500", bg: "bg-purple-500/10", trend: "+8.1%" },
+          { label: "Total Revenue", value: `$${stats?.totalRevenue?.toLocaleString() || '0'}`, icon: TrendingUp, trend: "+12.5%", trendColor: "text-emerald-600" },
+          { label: "Active Students", value: stats?.totalStudents || 0, icon: Users, trend: "+5.2%", trendColor: "text-emerald-600" },
+          { label: "Avg. Rating", value: stats?.avgRating || 0, icon: Star, trend: "Stable", trendColor: "text-muted-foreground" },
+          { label: "Total Reviews", value: stats?.totalReviews || 0, icon: MessageSquare, trend: "+8.1%", trendColor: "text-emerald-600" },
         ].map((stat, i) => (
-          <div key={i} className="saas-card group relative overflow-hidden border shadow-sm">
-             <div className="flex justify-between items-start mb-4">
-                <div className={cn("h-12 w-12 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110", stat.bg)}>
-                   <stat.icon className={cn("h-6 w-6", stat.color)} />
-                </div>
-                <Badge variant="outline" className="font-bold text-[10px] uppercase tracking-widest border-none bg-muted/50">
-                  {stat.trend}
-                </Badge>
-             </div>
-             <div>
-                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none mb-2">{stat.label}</p>
-                <p className="text-3xl font-black tracking-tight">{stat.value}</p>
-             </div>
+          <div 
+            key={i} 
+            className="rounded-xl border bg-card text-card-foreground shadow-sm p-6 transition-colors hover:border-border/80"
+          >
+            <div className="flex flex-row items-center justify-between pb-2">
+              <span className="text-sm font-medium text-muted-foreground">{stat.label}</span>
+              <stat.icon className="h-4 w-4 text-muted-foreground" />
+            </div>
+            <div className="flex items-baseline gap-2">
+              <div className="text-2xl font-bold tracking-tight">{stat.value}</div>
+              <span className={cn("text-xs font-medium", stat.trendColor)}>
+                {stat.trend}
+              </span>
+            </div>
           </div>
         ))}
       </div>
 
-      <div className="grid gap-8 lg:grid-cols-12">
+      {/* Charts Row 1 */}
+      <div className="grid gap-6 lg:grid-cols-12">
+        
         {/* Enrollment Trend */}
-        <div className="lg:col-span-8 saas-card p-0 flex flex-col border shadow-sm h-full">
-           <div className="p-6 border-b flex items-center justify-between bg-muted/5">
-              <div>
-                 <h2 className="text-xl font-black flex items-center gap-2">
-                    <TrendingUp className="h-5 w-5 text-primary" /> Enrollment Velocity
-                 </h2>
-                 <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-1">Institutional Growth Data</p>
-              </div>
-           </div>
-           <div className="p-6 h-[350px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={charts?.monthlyEnrollments}>
-                  <defs>
-                    <linearGradient id="colorEnroll" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.15}/>
-                      <stop offset="95%" stopColor="var(--primary)" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" opacity={0.3} />
-                  <XAxis dataKey="month" fontSize={10} fontWeight="bold" tickLine={false} axisLine={false} />
-                  <YAxis fontSize={10} fontWeight="bold" tickLine={false} axisLine={false} />
-                  <Tooltip 
-                     contentStyle={{ backgroundColor: 'var(--card)', border: '1px solid var(--border)', borderRadius: '12px' }}
-                  />
-                  <Area type="monotone" dataKey="count" stroke="var(--primary)" strokeWidth={4} fill="url(#colorEnroll)" />
-                </AreaChart>
-              </ResponsiveContainer>
-           </div>
+        <div className="lg:col-span-8 rounded-xl border bg-card shadow-sm">
+          <div className="p-6 pb-2">
+            <h3 className="text-lg font-semibold">Enrollment Trends</h3>
+            <p className="text-sm text-muted-foreground">Monthly student sign-ups over the last year.</p>
+          </div>
+          <div className="p-6 pt-2 h-[350px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={charts?.monthlyEnrollments}>
+                <defs>
+                  <linearGradient id="colorEnroll" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.1}/>
+                    <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.5} />
+                <XAxis 
+                  dataKey="month" 
+                  tickLine={false} 
+                  axisLine={false} 
+                  tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} 
+                />
+                <YAxis 
+                  tickLine={false} 
+                  axisLine={false} 
+                  tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} 
+                />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: 'hsl(var(--card))', 
+                    border: '1px solid hsl(var(--border))', 
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+                  }}
+                  labelStyle={{ color: 'hsl(var(--foreground))', fontWeight: 600 }}
+                />
+                <Area 
+                  type="monotone" 
+                  dataKey="count" 
+                  stroke="hsl(var(--primary))" 
+                  strokeWidth={2} 
+                  fill="url(#colorEnroll)" 
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
         </div>
 
         {/* Rating Distribution */}
-        <div className="lg:col-span-4 saas-card p-0 flex flex-col border shadow-sm h-full">
-           <div className="p-6 border-b bg-muted/5">
-              <h2 className="text-xl font-black flex items-center gap-2">
-                 <Star className="h-5 w-5 text-amber-500" /> Reputation
-              </h2>
-              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-1">Sentiment Analysis</p>
-           </div>
-           <div className="p-6 h-[350px]">
-              <ResponsiveContainer width="100%" height="100%">
-                 <BarChart data={charts?.ratingDistribution} layout="vertical">
-                    <XAxis type="number" hide />
-                    <YAxis dataKey="name" type="category" fontSize={10} fontWeight="bold" axisLine={false} tickLine={false} width={60} />
-                    <Tooltip 
-                       contentStyle={{ backgroundColor: 'var(--card)', border: '1px solid var(--border)', borderRadius: '12px' }}
-                    />
-                    <Bar dataKey="count" radius={[0, 4, 4, 0]}>
-                       {charts?.ratingDistribution?.map((entry: any, index: number) => (
-                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                       ))}
-                    </Bar>
-                 </BarChart>
-              </ResponsiveContainer>
-           </div>
+        <div className="lg:col-span-4 rounded-xl border bg-card shadow-sm">
+          <div className="p-6 pb-2">
+            <h3 className="text-lg font-semibold">Reputation</h3>
+            <p className="text-sm text-muted-foreground">Distribution of student reviews.</p>
+          </div>
+          <div className="p-6 pt-2 h-[350px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={charts?.ratingDistribution} layout="vertical">
+                <XAxis type="number" hide />
+                <YAxis 
+                  dataKey="name" 
+                  type="category" 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} 
+                  width={40} 
+                />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: 'hsl(var(--card))', 
+                    border: '1px solid hsl(var(--border))', 
+                    borderRadius: '8px' 
+                  }} 
+                />
+                <Bar dataKey="count" radius={[0, 4, 4, 0]} barSize={12}>
+                  {charts?.ratingDistribution?.map((entry: any, index: number) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} fillOpacity={0.8} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         </div>
       </div>
 
-      <div className="grid gap-8 lg:grid-cols-12">
+      {/* Charts Row 2 */}
+      <div className="grid gap-6 lg:grid-cols-12">
+        
          {/* Course Completion Rates */}
-         <div className="lg:col-span-4 saas-card p-0 border shadow-sm flex flex-col">
-            <div className="p-6 border-b bg-muted/5">
-               <h2 className="text-xl font-black flex items-center gap-2">
-                  <Award className="h-5 w-5 text-emerald-500" /> Graduation Rate
-               </h2>
-               <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-1">Student Success Metrics</p>
+         <div className="lg:col-span-4 rounded-xl border bg-card shadow-sm">
+            <div className="p-6 pb-2">
+               <h3 className="text-lg font-semibold">Completion Rate</h3>
+               <p className="text-sm text-muted-foreground">Student progress by course.</p>
             </div>
-            <div className="p-6 h-[300px]">
+            <div className="p-6 pt-2 h-[300px]">
                <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={charts?.completionRates}>
-                     <XAxis dataKey="name" fontSize={8} fontWeight="bold" axisLine={false} tickLine={false} />
-                     <YAxis fontSize={10} fontWeight="bold" axisLine={false} tickLine={false} />
-                     <Tooltip />
-                     <Bar dataKey="rate" fill="var(--primary)" radius={[4, 4, 0, 0]} />
+                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.5} />
+                     <XAxis 
+                       dataKey="name" 
+                       tickLine={false} 
+                       axisLine={false} 
+                       tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} 
+                     />
+                     <YAxis 
+                       tickLine={false} 
+                       axisLine={false} 
+                       tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} 
+                     />
+                     <Tooltip 
+                       contentStyle={{ 
+                         backgroundColor: 'hsl(var(--card))', 
+                         border: '1px solid hsl(var(--border))', 
+                         borderRadius: '8px' 
+                       }} 
+                     />
+                     <Bar dataKey="rate" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} fillOpacity={0.8} />
                   </BarChart>
                </ResponsiveContainer>
             </div>
          </div>
 
          {/* Course Performance Table */}
-         <div className="lg:col-span-8 saas-card p-0 border shadow-sm overflow-hidden flex flex-col">
-            <div className="p-6 border-b flex items-center justify-between bg-muted/5">
-               <h2 className="text-xl font-black">Curriculum Analytics</h2>
-               <Link href="/manager/courses">
-                  <Button variant="ghost" size="sm" className="font-bold text-xs">View All</Button>
+         <div className="lg:col-span-8 rounded-xl border bg-card shadow-sm">
+            <div className="p-6 flex flex-row items-center justify-between">
+               <div>
+                 <h3 className="text-lg font-semibold">Course Performance</h3>
+                 <p className="text-sm text-muted-foreground">Your top performing content.</p>
+               </div>
+               <Link href="/manager/courses" className="text-sm font-medium text-primary hover:underline underline-offset-4 flex items-center gap-1">
+                 View All <ExternalLink className="h-3 w-3" />
                </Link>
             </div>
-            <div className="overflow-x-auto">
-               <table className="w-full text-left">
-                  <thead className="bg-muted/30 border-b text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-                     <tr>
-                        <th className="px-6 py-4">Title</th>
-                        <th className="px-6 py-4">Enrollment</th>
-                        <th className="px-6 py-4">Avg Rating</th>
-                        <th className="px-6 py-4 text-right">Performance</th>
+            <div className="border-t">
+               <table className="w-full">
+                  <thead>
+                     <tr className="border-b bg-muted/30">
+                        <th className="h-12 px-6 text-left align-middle text-xs font-medium text-muted-foreground">Course Name</th>
+                        <th className="h-12 px-6 text-left align-middle text-xs font-medium text-muted-foreground">Enrollment</th>
+                        <th className="h-12 px-6 text-left align-middle text-xs font-medium text-muted-foreground">Rating</th>
+                        <th className="h-12 px-6 text-right align-middle text-xs font-medium text-muted-foreground">Status</th>
                      </tr>
                   </thead>
-                  <tbody className="divide-y divide-muted-foreground/10">
+                  <tbody>
                      {courses?.slice(0, 5).map((course: any) => (
-                        <tr key={course.id} className="group hover:bg-muted/10 transition-colors">
-                           <td className="px-6 py-4">
-                              <p className="text-sm font-black truncate max-w-[200px] group-hover:text-primary transition-colors">{course.title}</p>
+                        <tr key={course.id} className="border-b last:border-0 transition-colors hover:bg-muted/20">
+                           <td className="p-6 align-middle">
+                              <p className="text-sm font-medium truncate max-w-[200px]">{course.title}</p>
                            </td>
-                           <td className="px-6 py-4">
-                              <Badge variant="secondary" className="font-black text-xs">{course._count.enrollments}</Badge>
+                           <td className="p-6 align-middle">
+                              <span className="text-sm text-muted-foreground">{course._count.enrollments}</span>
                            </td>
-                           <td className="px-6 py-4">
-                              <div className="flex items-center gap-1 font-black text-sm text-amber-500">
-                                 <Star className="h-3.5 w-3.5 fill-current" />
-                                 {course.reviews?.length > 0 ? (course.reviews.reduce((s:any, r:any)=>s+r.rating,0)/course.reviews.length).toFixed(1) : "0.0"}
+                           <td className="p-6 align-middle">
+                              <div className="flex items-center gap-1.5">
+                                 <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                                 <span className="text-sm font-medium">
+                                    {course.reviews?.length > 0 ? (course.reviews.reduce((s:any, r:any)=>s+r.rating,0)/course.reviews.length).toFixed(1) : "0.0"}
+                                 </span>
                               </div>
                            </td>
-                           <td className="px-6 py-4 text-right">
-                              <div className="inline-flex items-center gap-1.5 text-xs font-black text-emerald-600">
-                                 <TrendingUp className="h-3 w-3" />
-                                 High
-                              </div>
+                           <td className="p-6 align-middle text-right">
+                              <Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                                 Active
+                              </Badge>
                            </td>
                         </tr>
                      ))}

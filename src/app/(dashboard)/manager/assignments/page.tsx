@@ -81,7 +81,7 @@ export default function InstructorAssignmentsPage() {
           <p className="text-muted-foreground font-medium">Evaluate student progress and provide constructive feedback.</p>
         </div>
         <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-          <DialogTrigger asChild>
+          <DialogTrigger>
             <Button className="font-black h-12 px-8 rounded-[0.75rem] gap-2 shadow-lg shadow-primary/20">
                <Plus className="h-5 w-5" /> Create Assignment
             </Button>
@@ -137,7 +137,7 @@ export default function InstructorAssignmentsPage() {
                    <Badge variant="outline" className="font-black text-[9px] uppercase tracking-widest bg-muted/50 border-none">
                       {assignment.course.title}
                    </Badge>
-                   {assignment.pendingCount > 0 ? (
+                   {/* {assignment.pendingCount > 0 ? (
                       <Badge className="bg-amber-500/10 text-amber-600 border-none font-black text-[9px] uppercase tracking-widest px-2 animate-pulse">
                          {assignment.pendingCount} Pending
                       </Badge>
@@ -145,7 +145,7 @@ export default function InstructorAssignmentsPage() {
                       <Badge className="bg-emerald-500/10 text-emerald-600 border-none font-black text-[9px] uppercase tracking-widest px-2">
                          All Graded
                       </Badge>
-                   )}
+                   )} */}
                 </div>
               </div>
               
@@ -158,9 +158,9 @@ export default function InstructorAssignmentsPage() {
                  <div className="flex items-center gap-1.5 text-[10px] font-black text-muted-foreground uppercase tracking-widest">
                     <Calendar className="h-3.5 w-3.5" /> Due {new Date(assignment.dueDate).toLocaleDateString([], { month: 'short', day: 'numeric' })}
                  </div>
-                 <div className="flex items-center gap-1.5 text-[10px] font-black text-muted-foreground uppercase tracking-widest">
+                 {/* <div className="flex items-center gap-1.5 text-[10px] font-black text-muted-foreground uppercase tracking-widest">
                     <Users className="h-3.5 w-3.5" /> {assignment._count.submissions} Total
-                 </div>
+                 </div> */}
               </div>
             </div>
 

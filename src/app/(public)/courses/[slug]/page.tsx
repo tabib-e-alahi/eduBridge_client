@@ -6,46 +6,32 @@ import { useCourseReviews, useRelatedCourses, useCreateReview } from "@/hooks/us
 import { useCourseProgress } from "@/hooks/useStudentData";
 import { Loading } from "@/components/shared/Loading";
 import { ErrorState } from "@/components/shared/ErrorState";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import {
-  Star,
-  Clock,
-  BookOpen,
-  Award,
-  Users,
-  CheckCircle2,
-  Calendar,
-  Share2,
-  Bookmark,
-  PlayCircle,
-  BarChart,
-  ShieldCheck,
-  ChevronRight,
-  ThumbsUp,
-  ThumbsDown,
-  MessageSquare
-} from "lucide-react";
+import { cn } from "@/lib/utils";
 import Image from "next/image";
 import Link from "next/link";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { cn } from "@/lib/utils";
+import {
+  Star, Clock, Users, CheckCircle2, Share2, Bookmark,
+  PlayCircle, ShieldCheck, ChevronRight, ThumbsUp, ThumbsDown,
+  MessageSquare, BookOpen, Globe, Lock, Trophy, Video,
+  FileText, Smartphone, GraduationCap, BarChart2, ChevronDown,
+  ChevronUp, Calendar, RefreshCcw, ArrowLeft, Download,
+} from "lucide-react";
 
 export default function CourseDetailsPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params);
-  const { data: courseData, isLoading: isCourseLoading, isError: isCourseError, refetch: refetchCourse } = useCourseBySlug(slug);
-  
+  const {
+    data: courseData,
+    isLoading: isCourseLoading,
+    isError: isCourseError,
+    refetch: refetchCourse,
+  } = useCourseBySlug(slug);
+
   const course = courseData?.data;
   const courseId = course?.id;
 
-  const { data: reviewsData, isLoading: isReviewsLoading } = useCourseReviews(courseId || "");
+  const { data: reviewsData } = useCourseReviews(courseId || "");
   const { data: relatedCoursesData } = useRelatedCourses(courseId || "");
   const { data: progressData } = useCourseProgress(courseId || "");
   const createReviewMutation = useCreateReview();
@@ -53,6 +39,8 @@ export default function CourseDetailsPage({ params }: { params: Promise<{ slug: 
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState("");
   const [isRecommended, setIsRecommended] = useState(true);
+  const [hoveredRating, setHoveredRating] = useState(0);
+  const [openSections, setOpenSections] = useState<Record<number, boolean>>({ 0: true });
 
   if (isCourseLoading) return <Loading />;
   if (isCourseError || !course) return <ErrorState message="Course not found" onRetry={refetchCourse} />;
@@ -64,525 +52,582 @@ export default function CourseDetailsPage({ params }: { params: Promise<{ slug: 
   const handleReviewSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!courseId) return;
-
-    createReviewMutation.mutate({
-      courseId,
-      payload: {
-        rating: reviewRating,
-        comment: reviewComment,
-        isRecommended
-      }
-    }, {
-      onSuccess: () => {
-        setReviewComment("");
-        setReviewRating(5);
-      }
-    });
+    createReviewMutation.mutate(
+      { courseId, payload: { rating: reviewRating, comment: reviewComment, isRecommended } },
+      { onSuccess: () => { setReviewComment(""); setReviewRating(5); } }
+    );
   };
 
+  const toggleSection = (i: number) =>
+    setOpenSections(prev => ({ ...prev, [i]: !prev[i] }));
+
+  // Calculate real duration
+  const totalSeconds = course.lessons?.reduce((acc: number, lesson: any) => {
+    if (!lesson.duration) return acc;
+    const parts = String(lesson.duration).split(':');
+    if (parts.length === 2) return acc + (parseInt(parts[0]) * 60) + parseInt(parts[1]);
+    return acc + (parseInt(lesson.duration) || 0);
+  }, 0) || 0;
+
+  const formattedDuration = totalSeconds > 0 
+    ? `${Math.floor(totalSeconds / 3600)}h ${Math.floor((totalSeconds % 3600) / 60)}m` 
+    : "Self-paced";
+
+  // Dynamic grouping of lessons into sections
+  const lessonsPerSection = 5;
+  const sections = [];
+  if (course.lessons && course.lessons.length > 0) {
+    for (let i = 0; i < course.lessons.length; i += lessonsPerSection) {
+      const sectionIndex = Math.floor(i / lessonsPerSection);
+      sections.push({
+        title: `Section ${sectionIndex + 1}: ${sectionIndex === 0 ? "Foundations & Overview" : "Advanced Implementation"}`,
+        lessons: course.lessons.slice(i, i + lessonsPerSection),
+        status: sectionIndex === 0 ? "ongoing" : "locked",
+        desc: sectionIndex === 0 
+          ? "Master the fundamentals and set the stage for your learning journey." 
+          : "Deep-dive into professional-grade concepts and project building.",
+      });
+    }
+  } else {
+    sections.push({
+      title: "Course Curriculum",
+      lessons: [],
+      status: "ongoing",
+      desc: "Coming soon: High-quality modules are being prepared by the instructor.",
+    });
+  }
+
+  const courseIncludes = [
+    { icon: Calendar, label: `Last Updated ${new Date(course.updatedAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}` },
+    { icon: Globe, label: "English Instruction" },
+    { icon: Smartphone, label: "Access on mobile and TV" },
+    { icon: ShieldCheck, label: "Verified Certificate of Completion" },
+  ];
+
   return (
-    <div className="flex flex-col min-h-screen bg-[#FDFCF8] dark:bg-[#1A1A1A] animate-in fade-in duration-1000">
-      {/* Hero Section */}
-      <div className="bg-card border-b border-border/40 pt-32 pb-24 relative overflow-hidden">
-        <div className="absolute top-0 left-0 w-full h-full opacity-[0.02] pointer-events-none">
-           <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-primary rounded-full blur-[150px] -translate-y-1/2 translate-x-1/3" />
+    <div className="min-h-screen bg-background max-w-7xl mx-auto text-foreground lg:pt-24">
+
+      {/* ── BREADCRUMB + BACK ── */}
+      <div className="border-b border-border/50 bg-card">
+        <div className=" px-6 h-12 flex items-center gap-3">
+          <Link href="/courses" className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors font-medium">
+            <ArrowLeft className="w-4 h-4" /> Back
+          </Link>
+          <span className="text-muted-foreground/30 text-sm">/</span>
+          <Link href="/courses" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Learn</Link>
+          <span className="text-muted-foreground/30 text-sm">/</span>
+          <Link href="/courses" className="text-sm text-muted-foreground hover:text-foreground transition-colors">All Courses</Link>
+          <span className="text-muted-foreground/30 text-sm">/</span>
+          <span className="text-sm text-foreground/70 truncate max-w-[160px]">{course.title}</span>
         </div>
+      </div>
 
-        <div className="container mx-auto px-6 grid lg:grid-cols-12 gap-16 items-center relative z-10">
-          <div className="lg:col-span-8 space-y-10">
-            <div className="flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.2em] text-primary/60">
-              <Link href="/courses" className="hover:text-primary transition-colors">Academy</Link>
-              <ChevronRight className="w-3 h-3" />
-              <Link href={`/courses?category=${course.category.slug}`} className="hover:text-primary transition-colors">{course.category.name}</Link>
-              <ChevronRight className="w-3 h-3" />
-              <span className="text-foreground/40 line-clamp-1">{course.title}</span>
-            </div>
+      {/* ── HERO: Thumbnail + Course Info ── */}
+      <div className=" px-2 py-8">
+        <div className="flex flex-col md:flex-row gap-8 items-start">
 
-            <div className="space-y-6">
-               <h1 className="text-5xl md:text-7xl font-black tracking-tight text-foreground leading-[0.95] text-premium">
-                 {course.title}
-               </h1>
-               <p className="text-xl text-muted-foreground leading-relaxed max-w-3xl font-medium">
-                 {course.description}
-               </p>
-            </div>
-            
-            <div className="flex flex-wrap items-center gap-10 pt-4">
-              <div className="flex items-center gap-3 bg-amber-500/5 px-4 py-2 rounded-2xl border border-amber-500/10">
-                <span className="text-xl font-black text-amber-600">{stats?.averageRating || "0.0"}</span>
-                <div className="flex text-amber-500">
-                  {[1,2,3,4,5].map(i => (
-                    <Star key={i} className={cn("w-4 h-4", i <= (stats?.averageRating || 0) ? "fill-current" : "text-muted-foreground/30")} />
-                  ))}
+          {/* Thumbnail */}
+          <div className="w-full md:w-85 shrink-0">
+            <div className="relative aspect-video rounded-2xl overflow-hidden bg-muted group cursor-pointer shadow-sm">
+              <Image
+                src={course.thumbnailUrl || "/no_image.jpg"}
+                alt={course.title}
+                fill
+                sizes="340px"
+                className="object-cover"
+              />
+              <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                <div className="h-14 w-14 rounded-full bg-white/90 shadow-lg flex items-center justify-center">
+                  <PlayCircle className="h-7 w-7 text-foreground" />
                 </div>
-                <span className="text-[10px] font-black uppercase tracking-widest text-amber-600/60">
-                  ({stats?.totalReviews || 0} Expert Reviews)
-                </span>
-              </div>
-              <div className="flex items-center gap-3 text-xs font-black uppercase tracking-[0.2em] text-muted-foreground">
-                <Users className="w-5 h-5 text-primary/40" />
-                {course._count?.enrollments || 0} Enrolled
-              </div>
-              <div className="flex items-center gap-3 text-xs font-black uppercase tracking-[0.2em] text-muted-foreground">
-                <Calendar className="w-5 h-5 text-primary/40" />
-                Updated {new Date(course.updatedAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
-              </div>
-            </div>
-
-            <div className="flex items-center gap-6 pt-10 border-t border-border/40">
-              <div className="relative">
-                 <Avatar className="h-16 w-16 border-2 border-background shadow-xl">
-                   <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${course.instructor.name}`} />
-                   <AvatarFallback className="font-black bg-primary/10 text-primary">{course.instructor.name?.charAt(0)}</AvatarFallback>
-                 </Avatar>
-                 <div className="absolute -bottom-1 -right-1 h-6 w-6 bg-emerald-500 rounded-full border-2 border-background flex items-center justify-center">
-                    <CheckCircle2 className="h-3.5 w-3.5 text-white" />
-                 </div>
-              </div>
-              <div>
-                <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">Verified Expert</p>
-                <p className="text-xl font-black text-foreground">{course.instructor.name}</p>
               </div>
             </div>
           </div>
 
-          {/* Sticky Purchase Card */}
-          <div className="hidden lg:block lg:col-span-4">
-             <div className="saas-card !p-2 bg-white dark:bg-[#222] border-border/40 shadow-2xl relative group overflow-visible">
-              <div className="absolute -inset-4 bg-primary/5 rounded-[40px] blur-2xl -z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
-              
-              <div className="relative aspect-video rounded-3xl overflow-hidden shadow-inner bg-muted">
-                 <Image
-                   src={course.thumbnailUrl || "/no_image.jpg"}
-                   alt={course.title}
-                   fill
-                   sizes="(max-width: 1024px) 100vw, 33vw"
-                   className="object-cover transition-transform duration-1000 group-hover:scale-110"
-                 />
-                 <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-500 cursor-pointer backdrop-blur-[2px]">
-                   <div className="h-20 w-20 rounded-full bg-white/20 backdrop-blur-xl border border-white/30 flex items-center justify-center group/play transition-transform hover:scale-110">
-                      <PlayCircle className="h-10 w-10 text-white fill-white/20" />
-                   </div>
-                 </div>
-              </div>
+          {/* Course info */}
+          <div className="flex-1 space-y-4">
 
-              <div className="p-8 space-y-10">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-1">
-                     <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Full Access License</p>
-                     <p className="text-5xl font-black tracking-tighter">${course.price}</p>
-                  </div>
-                  {course.price > 0 && (
-                    <div className="h-14 w-14 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-600 animate-pulse">
-                      <Zap className="h-6 w-6" />
+            {/* Title */}
+            <h1 className="text-2xl md:text-[1.75rem] font-bold leading-snug tracking-tight text-foreground">
+              {course.title}
+            </h1>
+
+            {/* Description */}
+            <p className="text-sm text-muted-foreground leading-relaxed max-w-2xl">
+              {course.description}
+            </p>
+
+            {/* Meta pills row */}
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm border-y border-border/40 py-3.5">
+              <span className="flex items-center gap-1.5 font-medium text-foreground/80">
+                <BarChart2 className="w-4 h-4 text-muted-foreground" />
+                {course.level}
+              </span>
+              <span className="text-muted-foreground/30">|</span>
+              <span className="flex items-center gap-1.5 text-foreground/80">
+                <Clock className="w-4 h-4 text-muted-foreground" />
+                {formattedDuration}
+              </span>
+              <span className="text-muted-foreground/30">|</span>
+              <span className="flex items-center gap-1.5 text-foreground/80">
+                <BookOpen className="w-4 h-4 text-muted-foreground" />
+                {course.lessons?.length || 0} Lessons
+              </span>
+              <span className="text-muted-foreground/30">|</span>
+              {/* Rating */}
+              <span className="flex items-center gap-1.5">
+                <span className="font-semibold text-foreground/80">{stats?.averageRating || "0.0"}</span>
+                <Star className="w-4 h-4 fill-[#f59e0b] text-[#f59e0b]" />
+                <Link href="#reviews" className="text-primary underline underline-offset-2 text-sm">
+                  {(stats?.totalReviews || 0).toLocaleString()} Ratings
+                </Link>
+              </span>
+              <span className="text-muted-foreground/30">|</span>
+              {/* Learner avatars */}
+              <span className="flex items-center gap-2">
+                <div className="flex -space-x-2">
+                  {[1, 2, 3].map(i => (
+                    <div key={i} className="h-7 w-7 rounded-full border-2 border-background bg-muted overflow-hidden">
+                      <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=user${i}`} className="w-full h-full object-cover" alt="" />
                     </div>
-                  )}
+                  ))}
                 </div>
+                <span className="text-sm font-medium text-foreground/70">
+                  {(course._count?.enrollments || 0) > 1000
+                    ? `${((course._count?.enrollments || 0) / 1000).toFixed(1)}K`
+                    : course._count?.enrollments || 0} Learners
+                </span>
+              </span>
+            </div>
 
-                <div className="flex flex-col gap-4">
-                  <Link href={isEnrolled ? `/learn/${course.slug}` : `/checkout/${course.slug}`} className="w-full">
-                    <button className="w-full h-16 bg-primary text-primary-foreground rounded-2xl font-black text-sm uppercase tracking-widest hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-primary/20">
-                      {isEnrolled ? "Continue Learning" : "Enroll Now"}
-                    </button>
-                  </Link>
-                  <button className="w-full h-16 bg-muted text-foreground rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-muted/80 transition-all flex items-center justify-center gap-3">
-                    <Bookmark className="h-5 w-5 text-muted-foreground" />
-                    Save Program
-                  </button>
-                </div>
+            {/* CTA row */}
+            <div className="flex items-center gap-3 flex-wrap">
+              {/* Price + enroll */}
+              <Link href={isEnrolled ? `/learn/${course.slug}` : `/checkout/${course.slug}`}>
+                <button className="h-11 px-7 bg-foreground text-background dark:bg-foreground dark:text-background rounded-xl font-semibold text-sm hover:opacity-85 active:scale-[0.98] transition-all shadow-sm">
+                  {isEnrolled ? "Continue Learning" : "Start Learning"}
+                </button>
+              </Link>
 
-                <div className="space-y-6 pt-2">
-                  <div className="flex items-center justify-center gap-3 py-3 rounded-xl bg-muted/30">
-                    <ShieldCheck className="w-5 h-5 text-emerald-500" /> 
-                    <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">30-Day Professional Guarantee</span>
-                  </div>
-                  <div className="space-y-5">
-                    <p className="text-xs font-black uppercase tracking-widest text-foreground">Program Curriculum Highlights</p>
-                    <ul className="space-y-4 text-sm font-bold text-muted-foreground">
-                      <li className="flex items-center gap-4">
-                        <div className="h-2 w-2 rounded-full bg-primary" /> 12.5 Hours Masterclass Video
-                      </li>
-                      <li className="flex items-center gap-4">
-                        <div className="h-2 w-2 rounded-full bg-primary" /> {course.lessons?.length || 0} Technical Modules
-                      </li>
-                      <li className="flex items-center gap-4">
-                        <div className="h-2 w-2 rounded-full bg-primary" /> {course.level} Complexity Level
-                      </li>
-                      <li className="flex items-center gap-4">
-                        <div className="h-2 w-2 rounded-full bg-primary" /> Professional Certification
-                      </li>
-                    </ul>
-                  </div>
+              {/* Icon buttons */}
+              <button className="h-11 w-11 rounded-xl border border-border/60 flex items-center justify-center text-muted-foreground hover:bg-muted hover:text-foreground transition-colors" title="Save to wishlist">
+                <Bookmark className="w-4.5 h-4.5" />
+              </button>
+              <button className="h-11 w-11 rounded-xl border border-border/60 flex items-center justify-center text-muted-foreground hover:bg-muted hover:text-foreground transition-colors" title="Share">
+                <Share2 className="w-4.5 h-4.5" />
+              </button>
+
+              {/* Instructor inline */}
+              <Link href={`/mentors/${course.instructor.id}`} className="flex items-center gap-2.5 ml-1 group">
+                <Avatar className="h-9 w-9 border border-border/40">
+                  <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${course.instructor.name}`} />
+                  <AvatarFallback className="text-xs font-bold bg-muted">{course.instructor.name?.charAt(0)}</AvatarFallback>
+                </Avatar>
+                <div className="leading-tight">
+                  <p className="text-sm font-semibold group-hover:text-primary transition-colors">{course.instructor.name}</p>
+                  <p className="text-xs text-muted-foreground">Instructor</p>
                 </div>
-              </div>
+              </Link>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Main Content Sections */}
-      <section className="container mx-auto px-6 py-24 pb-40">
-        <div className="grid lg:grid-cols-12 gap-20">
-          <div className="lg:col-span-8">
-            <Tabs defaultValue="overview" className="w-full">
-              <TabsList className="w-full justify-start border-none bg-transparent h-auto p-0 gap-12 overflow-x-auto overflow-y-hidden pb-4">
-                {["Overview", "Curriculum", "Instructor", "Reviews"].map(tab => (
-                  <TabsTrigger 
-                    key={tab}
-                    value={tab.toLowerCase()} 
-                    className="data-[state=active]:text-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none rounded-none px-0 py-4 text-xs font-black uppercase tracking-widest text-muted-foreground transition-all relative group"
-                  >
-                    {tab}
-                    <div className="absolute bottom-0 left-0 w-0 h-1 bg-primary transition-all group-data-[state=active]:w-full rounded-full" />
-                  </TabsTrigger>
+      <div className="border-t border-border/40" />
+
+      {/* ── MAIN CONTENT: Curriculum (left) + Sidebar (right) ── */}
+      <div className=" px-2 py-8">
+        <div className="grid lg:grid-cols-[1fr_320px] gap-8 items-start">
+
+          {/* ── LEFT: Course Content ── */}
+          <div>
+            {/* What you'll learn */}
+            <div className="mb-12 border border-border/50 rounded-2xl p-6 bg-card">
+              <h2 className="font-bold text-lg mb-6 flex items-center gap-2">
+                <CheckCircle2 className="w-5 h-5 text-primary" />
+                What you'll learn
+              </h2>
+              <div className="grid sm:grid-cols-2 gap-x-8 gap-y-4">
+                {[
+                  `Master the core concepts of ${course.category.name}`,
+                  `Build professional-grade projects using ${course.title.split(' ')[0]}`,
+                  "Implement industry-standard best practices",
+                  "Gain confidence in architectural decisions",
+                  "Prepare for professional certifications",
+                  "Apply knowledge to real-world scenarios"
+                ].map((item, i) => (
+                  <div key={i} className="flex gap-3 text-sm leading-snug">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                    <span className="text-foreground/80">{item}</span>
+                  </div>
                 ))}
-              </TabsList>
-              
-              <TabsContent value="overview" className="pt-16 space-y-20 outline-none animate-in fade-in duration-700">
-                <div className="space-y-8">
-                  <h3 className="text-3xl font-black tracking-tight">Executive Summary</h3>
-                  <p className="text-muted-foreground leading-relaxed text-lg font-medium whitespace-pre-wrap max-w-4xl">
-                    {course.description}
-                  </p>
-                </div>
-                
-                <div className="saas-card p-12 bg-muted/10 border-none shadow-none">
-                  <div className="flex items-center gap-4 mb-10">
-                     <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
-                        <Target className="h-6 w-6" />
-                     </div>
-                     <h3 className="text-2xl font-black tracking-tight">Key Learning Objectives</h3>
-                  </div>
-                  <div className="grid sm:grid-cols-2 gap-8">
-                    {[
-                      "Mastering core principles and architecture",
-                      "Building production-ready applications",
-                      "Integrating with advanced AI models",
-                      "Optimizing performance and scalability",
-                      "Professional debugging and testing",
-                      "Deployment and CI/CD workflows"
-                    ].map((item, i) => (
-                      <div key={i} className="flex gap-4 items-start group">
-                        <div className="h-6 w-6 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-0.5 group-hover:bg-primary group-hover:text-white transition-all">
-                           <CheckCircle2 className="h-3.5 w-3.5" />
-                        </div>
-                        <span className="text-base font-bold text-foreground/80 leading-snug">{item}</span>
+              </div>
+            </div>
+
+            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-4">Course Content</p>
+
+            <div className="space-y-3">
+              {sections.map((section, si) => (
+                <div key={si} className="border border-border/50 rounded-xl overflow-hidden">
+
+                  {/* Section header */}
+                  <button
+                    className="w-full flex items-center justify-between px-5 py-4 hover:bg-muted/30 transition-colors text-left"
+                    onClick={() => toggleSection(si)}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="font-semibold text-[15px]">{section.title}</span>
+                      {section.status === "ongoing" && (
+                        <span className="text-[11px] font-semibold bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                          <span className="h-1.5 w-1.5 rounded-full bg-amber-500 inline-block" />
+                          Ongoing
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      {section.status === "locked" && (
+                        <Lock className="w-4 h-4 text-muted-foreground/40" />
+                      )}
+                      {openSections[si]
+                        ? <ChevronUp className="w-4 h-4 text-muted-foreground" />
+                        : <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                      }
+                    </div>
+                  </button>
+
+                  {/* Section expanded content */}
+                  {openSections[si] && (
+                    <div className="border-t border-border/40">
+                      {/* Section description */}
+                      <p className="px-5 py-3 text-sm text-muted-foreground leading-relaxed bg-muted/20 border-b border-border/30">
+                        {section.desc}
+                      </p>
+
+                      {/* Lesson rows */}
+                      <div className="divide-y divide-border/30">
+                        {section.lessons.map((lesson: any, li: number) => {
+                          const isFree = si === 0 && li === 0;
+                          return (
+                            <div
+                              key={lesson.id}
+                              className={cn(
+                                "flex items-center gap-3 px-5 py-3.5 transition-colors",
+                                isFree
+                                  ? "bg-background border-2 border-foreground rounded-lg mx-3 my-2 shadow-sm cursor-pointer hover:bg-muted/20"
+                                  : "hover:bg-muted/20"
+                              )}
+                            >
+                              <PlayCircle className={cn("w-5 h-5 shrink-0", isFree ? "text-foreground" : "text-muted-foreground/50")} />
+                              <span className={cn("text-sm flex-1 truncate", isFree ? "text-foreground font-medium" : "text-foreground/70")}>
+                                {lesson.title}
+                              </span>
+                              {isFree && (
+                                <Link href="#" className="text-sm font-semibold text-foreground underline underline-offset-2 shrink-0">
+                                  Preview
+                                </Link>
+                              )}
+                              {!isFree && (
+                                <span className="text-xs text-muted-foreground tabular-nums shrink-0">{lesson.duration || "15:00"}</span>
+                              )}
+                            </div>
+                          );
+                        })}
                       </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {/* Reviews section */}
+            <div id="reviews" className="mt-12 space-y-8">
+              <div className="flex items-center justify-between">
+                <h2 className="font-bold text-lg">Student Reviews</h2>
+                <div className="flex items-center gap-1.5 text-sm">
+                  <span className="font-semibold">{stats?.averageRating || "0.0"}</span>
+                  <div className="flex gap-0.5">
+                    {[1, 2, 3, 4, 5].map(i => (
+                      <Star key={i} className={cn("w-3.5 h-3.5", i <= Math.round(stats?.averageRating || 0) ? "fill-[#f59e0b] text-[#f59e0b]" : "fill-muted text-muted-foreground/20")} />
                     ))}
                   </div>
+                  <span className="text-muted-foreground text-xs">({(stats?.totalReviews || 0).toLocaleString()} ratings)</span>
                 </div>
-              </TabsContent>
+              </div>
 
-              <TabsContent value="curriculum" className="pt-16 outline-none animate-in fade-in duration-700">
-                <div className="space-y-10">
-                   <div className="flex items-center justify-between border-b border-border/40 pb-8">
-                     <h3 className="text-3xl font-black tracking-tight">Structural Design</h3>
-                     <span className="px-4 py-2 rounded-xl bg-muted font-black text-[10px] uppercase tracking-widest text-muted-foreground">{course.lessons?.length || 0} Modules</span>
-                   </div>
-                   <div className="space-y-4">
-                      {course.lessons?.map((lesson: any, i: number) => (
-                        <div key={lesson.id} className="saas-card p-6 flex items-center justify-between hover:bg-white dark:hover:bg-muted/50 border-none shadow-sm group">
-                           <div className="flex items-center gap-8">
-                              <div className="h-12 w-12 rounded-2xl bg-muted text-muted-foreground flex items-center justify-center text-sm font-black group-hover:bg-primary/10 group-hover:text-primary transition-all">
-                                {String(i + 1).padStart(2, '0')}
-                              </div>
-                              <div className="space-y-1">
-                                <p className="font-black text-lg group-hover:text-primary transition-colors leading-none">{lesson.title}</p>
-                                <div className="flex items-center gap-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">
-                                  <Clock className="w-3.5 h-3.5 text-primary/40" />
-                                  <span>Duration: {lesson.duration || "15:00"}</span>
-                                  <span className="mx-2 opacity-30">•</span>
-                                  <span>Verified Content</span>
-                                </div>
-                              </div>
-                           </div>
-                           <button className="h-10 px-6 rounded-xl bg-muted text-foreground font-black text-[10px] uppercase tracking-widest hover:bg-primary hover:text-white transition-all">Preview</button>
-                        </div>
-                      ))}
-                   </div>
+              {/* Rating distribution */}
+              <div className="flex gap-6 items-start border border-border/40 rounded-xl p-5 bg-card">
+                <div className="flex flex-col items-center gap-1 shrink-0">
+                  <p className="text-4xl font-bold text-[#f59e0b]">{stats?.averageRating || "0.0"}</p>
+                  <div className="flex gap-0.5">
+                    {[1, 2, 3, 4, 5].map(i => (
+                      <Star key={i} className={cn("w-3.5 h-3.5", i <= Math.round(stats?.averageRating || 0) ? "fill-[#f59e0b] text-[#f59e0b]" : "fill-muted text-muted")} />
+                    ))}
+                  </div>
+                  <p className="text-[11px] text-muted-foreground">Course Rating</p>
                 </div>
-              </TabsContent>
-
-              <TabsContent value="instructor" className="pt-16 outline-none animate-in fade-in duration-700">
-                <div className="saas-card p-12 flex flex-col md:flex-row gap-12 items-start border-none bg-muted/10 shadow-none">
-                   <div className="relative shrink-0">
-                      <Avatar className="h-32 w-32 border-4 border-white dark:border-background shadow-2xl">
-                         <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${course.instructor.name}`} />
-                         <AvatarFallback className="text-3xl font-black">{course.instructor.name?.charAt(0)}</AvatarFallback>
-                      </Avatar>
-                      <div className="absolute -bottom-2 -right-2 h-10 w-10 bg-primary rounded-2xl flex items-center justify-center text-white border-4 border-background">
-                         <ShieldCheck className="h-5 w-5" />
+                <div className="flex-1 space-y-2">
+                  {(stats?.distribution || [5, 4, 3, 2, 1].map(s => ({ star: s, percentage: 0 }))).map(dist => (
+                    <div key={dist.star} className="flex items-center gap-2.5">
+                      <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+                        <div className="h-full bg-[#f59e0b] rounded-full transition-all" style={{ width: `${dist.percentage}%` }} />
                       </div>
-                   </div>
-                   <div className="space-y-6 flex-1">
-                      <div>
-                        <h3 className="text-3xl font-black tracking-tight">{course.instructor.name}</h3>
-                        <p className="text-primary font-black text-xs uppercase tracking-[0.2em] mt-2">Principal Engineering Mentor</p>
+                      <div className="flex gap-0.5 shrink-0">
+                        {[...Array(dist.star)].map((_, i) => (
+                          <Star key={i} className="w-2.5 h-2.5 fill-[#f59e0b] text-[#f59e0b]" />
+                        ))}
                       </div>
-                      <p className="text-muted-foreground text-lg leading-relaxed font-medium italic">
-                        "Empowering the next generation of technical leaders through systematic, architecture-first learning methodologies."
-                      </p>
-                      <p className="text-muted-foreground text-base leading-relaxed font-medium">
-                        With over 10 years of experience in the industry, {course.instructor.name} has trained thousands of developers worldwide. Specialized in modern web architecture, cloud-native applications, and AI integrations.
-                      </p>
-                      <div className="pt-4 flex gap-4">
-                         <button className="h-12 px-8 bg-foreground text-background dark:bg-background dark:text-foreground rounded-xl font-black text-[10px] uppercase tracking-widest hover:scale-105 transition-all">View Expert Profile</button>
-                         <button className="h-12 px-8 bg-muted text-foreground rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-muted/80 transition-all">Full Biography</button>
-                      </div>
-                   </div>
+                      <span className="text-xs text-muted-foreground w-7 text-right tabular-nums shrink-0">{dist.percentage.toFixed(0)}%</span>
+                    </div>
+                  ))}
                 </div>
-              </TabsContent>
+              </div>
 
-              <TabsContent value="reviews" className="pt-16 space-y-16 outline-none animate-in fade-in duration-700">
-                 {/* Rating Summary Card */}
-                 <div className="grid md:grid-cols-12 gap-12 saas-card p-12 border-none bg-card shadow-lg items-center relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 rounded-full blur-3xl" />
-                    
-                    <div className="md:col-span-4 text-center space-y-4 border-b md:border-b-0 md:border-r border-border/40 pb-10 md:pb-0 md:pr-12">
-                       <p className="text-7xl font-black text-foreground tracking-tighter">{stats?.averageRating || "0.0"}</p>
-                       <div className="flex justify-center gap-1.5 text-amber-500">
-                          {[1, 2, 3, 4, 5].map(i => (
-                            <Star key={i} className={cn("h-6 w-6", i <= (stats?.averageRating || 0) ? "fill-current" : "text-muted-foreground/20")} />
+              {/* Write review */}
+              {isEnrolled && (
+                <div className="border border-border/50 rounded-xl p-5 space-y-4 bg-card">
+                  <h3 className="font-semibold">Leave a review</h3>
+                  <form onSubmit={handleReviewSubmit} className="space-y-4">
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Rating</label>
+                      <div className="flex gap-1">
+                        {[1, 2, 3, 4, 5].map(i => (
+                          <Star
+                            key={i}
+                            className={cn(
+                              "w-7 h-7 cursor-pointer transition-transform hover:scale-110",
+                              i <= (hoveredRating || reviewRating) ? "fill-[#f59e0b] text-[#f59e0b]" : "text-muted-foreground/25"
+                            )}
+                            onMouseEnter={() => setHoveredRating(i)}
+                            onMouseLeave={() => setHoveredRating(0)}
+                            onClick={() => setReviewRating(i)}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <button type="button" onClick={() => setIsRecommended(true)}
+                        className={cn("flex items-center gap-2 px-4 h-9 rounded-lg text-sm font-medium border transition-all",
+                          isRecommended ? "bg-primary text-primary-foreground border-primary" : "border-border/60 text-muted-foreground hover:border-border"
+                        )}>
+                        <ThumbsUp className="w-3.5 h-3.5" /> Recommend
+                      </button>
+                      <button type="button" onClick={() => setIsRecommended(false)}
+                        className={cn("flex items-center gap-2 px-4 h-9 rounded-lg text-sm font-medium border transition-all",
+                          !isRecommended ? "bg-destructive text-white border-destructive" : "border-border/60 text-muted-foreground hover:border-border"
+                        )}>
+                        <ThumbsDown className="w-3.5 h-3.5" /> Not for me
+                      </button>
+                    </div>
+                    <Textarea
+                      placeholder="What did you like or dislike? How was the instructor?"
+                      className="min-h-[100px] text-sm resize-none border-border/60 rounded-lg"
+                      value={reviewComment}
+                      onChange={e => setReviewComment(e.target.value)}
+                      required
+                    />
+                    <button type="submit" disabled={createReviewMutation.isPending}
+                      className="h-9 px-6 bg-primary text-primary-foreground rounded-lg text-sm font-semibold hover:opacity-90 transition-all disabled:opacity-50">
+                      {createReviewMutation.isPending ? "Submitting…" : "Submit review"}
+                    </button>
+                  </form>
+                </div>
+              )}
+
+              {/* Reviews list */}
+              <div className="space-y-6 divide-y divide-border/40">
+                {reviews.map(review => (
+                  <div key={review.id} className="flex gap-3.5 pt-6 first:pt-0">
+                    <Avatar className="h-9 w-9 shrink-0 border border-border/30">
+                      <AvatarImage src={review.user.image} />
+                      <AvatarFallback className="text-xs font-semibold bg-muted">{review.user.name.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 space-y-1.5">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="font-semibold text-sm">{review.user.name}</span>
+                        <div className="flex gap-0.5">
+                          {[...Array(5)].map((_, i) => (
+                            <Star key={i} className={cn("w-3 h-3", i < review.rating ? "fill-[#f59e0b] text-[#f59e0b]" : "fill-muted text-muted")} />
                           ))}
-                       </div>
-                       <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">Aggregate Expert Rating</p>
-                    </div>
-                    <div className="md:col-span-8 space-y-5 pl-0 md:pl-4">
-                       {stats?.distribution.map((dist) => (
-                         <div key={dist.star} className="flex items-center gap-6">
-                            <div className="w-16 text-[9px] font-black uppercase tracking-widest text-muted-foreground/60">{dist.star} Excellence</div>
-                            <div className="flex-1 h-3 bg-muted rounded-full overflow-hidden shadow-inner">
-                               <div 
-                                 className="h-full bg-amber-500 rounded-full transition-all duration-1000" 
-                                 style={{ width: `${dist.percentage}%` }} 
-                               />
-                            </div>
-                            <div className="w-12 text-[9px] text-right font-black text-muted-foreground">{dist.percentage.toFixed(0)}%</div>
-                         </div>
-                       ))}
-                    </div>
-                 </div>
-
-                 {/* Write a Review Section (Enrolled Only) */}
-                 {isEnrolled && (
-                    <div className="saas-card p-12 border-primary/10 bg-primary/5 shadow-none overflow-hidden relative group">
-                       <div className="absolute -right-10 -bottom-10 h-40 w-40 bg-primary/5 rounded-full blur-3xl group-hover:bg-primary/10 transition-all duration-1000" />
-                       
-                       <div className="relative z-10 space-y-10">
-                          <div className="flex items-center gap-4">
-                             <div className="h-12 w-12 rounded-2xl bg-primary flex items-center justify-center text-white shadow-lg shadow-primary/20">
-                                <MessageSquare className="h-6 w-6" />
-                             </div>
-                             <div className="space-y-1">
-                                <h3 className="text-2xl font-black tracking-tight">Share Your Experience</h3>
-                                <p className="text-sm font-bold text-muted-foreground">Your feedback drives the evolution of this program.</p>
-                             </div>
-                          </div>
-
-                          <form onSubmit={handleReviewSubmit} className="space-y-10">
-                             <div className="flex flex-col md:flex-row items-start md:items-center gap-12">
-                                <div className="space-y-4">
-                                   <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Quality Assessment</Label>
-                                   <div className="flex gap-2">
-                                      {[1, 2, 3, 4, 5].map((i) => (
-                                         <Star 
-                                           key={i} 
-                                           className={cn(
-                                             "h-10 w-10 cursor-pointer transition-all hover:scale-110",
-                                             i <= reviewRating ? "fill-amber-500 text-amber-500" : "text-muted-foreground/20"
-                                           )} 
-                                           onClick={() => setReviewRating(i)}
-                                         />
-                                      ))}
-                                   </div>
-                                </div>
-                                <div className="space-y-4">
-                                   <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Program Recommendation</Label>
-                                   <div className="flex gap-3">
-                                      <button 
-                                        type="button" 
-                                        className={cn(
-                                          "h-12 px-8 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center gap-3",
-                                          isRecommended ? "bg-primary text-white shadow-lg shadow-primary/20" : "bg-muted text-muted-foreground hover:bg-muted/80"
-                                        )}
-                                        onClick={() => setIsRecommended(true)}
-                                      >
-                                         <ThumbsUp className="h-4 w-4" /> Recommend
-                                      </button>
-                                      <button 
-                                        type="button" 
-                                        className={cn(
-                                          "h-12 px-8 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center gap-3",
-                                          !isRecommended ? "bg-destructive text-white shadow-lg shadow-destructive/20" : "bg-muted text-muted-foreground hover:bg-muted/80"
-                                        )}
-                                        onClick={() => setIsRecommended(false)}
-                                      >
-                                         <ThumbsDown className="h-4 w-4" /> Not Recommended
-                                      </button>
-                                   </div>
-                                </div>
-                             </div>
-                             <div className="space-y-4">
-                                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Expert Testimony</Label>
-                                <Textarea 
-                                  placeholder="Articulate your thoughts on the curriculum, instructor, and overall value..."
-                                  className="min-h-[160px] rounded-3xl bg-white dark:bg-background border-none shadow-inner p-8 font-bold text-base focus:ring-4 focus:ring-primary/5 transition-all"
-                                  value={reviewComment}
-                                  onChange={(e) => setReviewComment(e.target.value)}
-                                  required
-                                />
-                             </div>
-                             <button 
-                               type="submit" 
-                               className="h-16 px-12 bg-primary text-primary-foreground rounded-2xl font-black text-xs uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-xl shadow-primary/20 disabled:opacity-50" 
-                               disabled={createReviewMutation.isPending}
-                             >
-                                {createReviewMutation.isPending ? "Validating Submission..." : "Publish Testimony"}
-                             </button>
-                          </form>
-                       </div>
-                    </div>
-                 )}
-                 
-                 {/* Review List */}
-                 <div className="grid gap-8">
-                    {reviews.map((review) => (
-                      <div key={review.id} className="saas-card p-10 border-none bg-muted/10 shadow-none flex flex-col md:flex-row gap-10 items-start hover:bg-muted/20 transition-all">
-                         <div className="relative shrink-0">
-                            <Avatar className="h-16 w-16 border-2 border-white dark:border-background shadow-xl">
-                              <AvatarImage src={review.user.image} />
-                              <AvatarFallback className="font-black bg-primary/10 text-primary text-base">{review.user.name.charAt(0)}</AvatarFallback>
-                            </Avatar>
-                            <div className="absolute -bottom-1 -right-1 h-6 w-6 bg-emerald-500 rounded-full border-2 border-background flex items-center justify-center">
-                               <ShieldCheck className="h-3.5 w-3.5 text-white" />
-                            </div>
-                         </div>
-                         <div className="flex-1 space-y-6">
-                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                               <div className="space-y-1">
-                                  <p className="font-black text-xl tracking-tight">{review.user.name}</p>
-                                  <div className="flex gap-1 text-amber-500">
-                                     {[...Array(5)].map((_, i) => (
-                                        <Star key={i} className={cn("h-3.5 w-3.5", i < review.rating ? "fill-current" : "text-muted-foreground/20")} />
-                                     ))}
-                                  </div>
-                               </div>
-                               <span className="px-4 py-1.5 rounded-full bg-muted text-[9px] font-black text-muted-foreground uppercase tracking-widest border border-border/40">Verified Alumnus • {new Date(review.createdAt).toLocaleDateString()}</span>
-                            </div>
-                            <p className="text-muted-foreground text-lg leading-relaxed font-medium italic">
-                               "{review.comment}"
-                            </p>
-                            <div className="flex items-center gap-3">
-                               {review.isRecommended ? (
-                                  <div className="flex items-center gap-2 text-emerald-600 font-black text-[9px] uppercase tracking-widest bg-emerald-500/5 px-3 py-1.5 rounded-xl border border-emerald-500/10">
-                                     <ThumbsUp className="h-3.5 w-3.5" /> Program Recommended
-                                  </div>
-                               ) : (
-                                  <div className="flex items-center gap-2 text-destructive font-black text-[9px] uppercase tracking-widest bg-destructive/5 px-3 py-1.5 rounded-xl border border-destructive/10">
-                                     <ThumbsDown className="h-3.5 w-3.5" /> Constructive Feedback
-                                  </div>
-                               )}
-                               <button className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary transition-all ml-auto">
-                                  <Share2 className="h-3.5 w-3.5" /> Share
-                               </button>
-                            </div>
-                         </div>
+                        </div>
+                        <span className="text-xs text-muted-foreground">
+                          {new Date(review.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                        </span>
                       </div>
-                    ))}
-                    {!reviews.length && (
-                      <div className="text-center py-32 saas-card bg-transparent border-dashed border-2 border-muted-foreground/10 shadow-none">
-                         <div className="h-20 w-20 rounded-3xl bg-muted/30 flex items-center justify-center mx-auto mb-6">
-                            <MessageSquare className="h-10 w-10 text-muted-foreground/20" />
-                         </div>
-                         <p className="text-muted-foreground font-black uppercase tracking-[0.2em] text-xs">Awaiting verified testimonials</p>
-                      </div>
-                    )}
-                 </div>
-              </TabsContent>
-            </Tabs>
+                      <p className="text-sm text-muted-foreground leading-relaxed">{review.comment}</p>
+                      {review.isRecommended && (
+                        <span className="text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1 mt-1">
+                          <CheckCircle2 className="w-3.5 h-3.5" /> Recommends this course
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+                {!reviews.length && (
+                  <div className="text-center py-14 border border-dashed border-border/40 rounded-xl">
+                    <MessageSquare className="w-7 h-7 text-muted-foreground/20 mx-auto mb-2" />
+                    <p className="text-sm text-muted-foreground">No reviews yet.</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* ── RIGHT SIDEBAR ── */}
+          <div className="space-y-4">
+
+            {/* Certificate card */}
+            <div className="border border-border/50 rounded-xl overflow-hidden bg-card">
+              <div className="flex items-center justify-between px-5 py-3.5 border-b border-border/40">
+                <h3 className="font-semibold text-sm">Earn Your Certificate</h3>
+                <button className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
+                  <Lock className="w-3.5 h-3.5" />
+                  Download Certificate
+                </button>
+              </div>
+              {/* Certificate preview */}
+              <div className="p-4 bg-muted/20">
+                <div className="relative rounded-lg border border-border/40 bg-card overflow-hidden aspect-[4/2.7] flex items-center justify-center shadow-sm">
+                  {/* Dotted background pattern */}
+                  <div className="absolute inset-0"
+                    style={{
+                      backgroundImage: "radial-gradient(circle, hsl(var(--border)) 1px, transparent 1px)",
+                      backgroundSize: "16px 16px",
+                      opacity: 0.4
+                    }}
+                  />
+                  {/* Stars decoration */}
+                  <Star className="absolute top-3 left-4 w-5 h-5 fill-[#f59e0b] text-[#f59e0b] opacity-70" />
+                  <Star className="absolute top-4 left-8 w-3 h-3 fill-[#f59e0b] text-[#f59e0b] opacity-50" />
+                  <Star className="absolute top-3 right-4 w-5 h-5 fill-[#f59e0b] text-[#f59e0b] opacity-70" />
+                  {/* Certificate content */}
+                  <div className="relative z-10 text-center space-y-1 px-6">
+                    <p className="font-serif italic text-[11px] text-foreground/60 tracking-wide">Certificate of Completion</p>
+                    <p className="font-bold text-sm text-foreground">
+                      {course.instructor.name}
+                    </p>
+                    <p className="text-[10px] text-muted-foreground">For successfully completing this program</p>
+                    <div className="flex items-center justify-center gap-3 pt-0.5 text-[9px] text-muted-foreground">
+                      <span>Given by: {course.instructor.name}</span>
+                      <span>Date: {new Date().toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: '2-digit' })}</span>
+                    </div>
+                  </div>
+                  {/* Badge decoration */}
+                  <div className="absolute bottom-2 right-3 flex flex-col items-center">
+                    <div className="w-8 h-8 rounded-full bg-primary/10 border-2 border-primary/20 flex items-center justify-center">
+                      <Trophy className="w-4 h-4 text-primary" />
+                    </div>
+                    <div className="flex gap-0.5 mt-0.5">
+                      <div className="w-2.5 h-4 bg-[#f59e0b] rounded-sm opacity-80" />
+                      <div className="w-2.5 h-4 bg-primary rounded-sm opacity-80" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Course meta info */}
+            <div className="border border-border/50 rounded-xl bg-card divide-y divide-border/40">
+              {courseIncludes.map(({ icon: Icon, label }) => (
+                <div key={label} className="flex items-center gap-3 px-5 py-3.5">
+                  <Icon className="w-4 h-4 text-muted-foreground shrink-0" />
+                  <span className="text-sm text-foreground/80">{label}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Instructor card */}
+            <Link href={`/mentors/${course.instructor.id}`}
+              className="flex items-center justify-between px-5 py-4 border border-border/50 rounded-xl bg-card hover:bg-muted/20 transition-colors group"
+            >
+              <div className="flex items-center gap-3">
+                <Avatar className="h-10 w-10 border border-border/40">
+                  <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${course.instructor.name}`} />
+                  <AvatarFallback className="font-bold text-sm bg-muted">{course.instructor.name?.charAt(0)}</AvatarFallback>
+                </Avatar>
+                <div>
+                  <p className="font-semibold text-sm group-hover:text-primary transition-colors">{course.instructor.name}</p>
+                  <p className="text-xs text-muted-foreground">Instructor</p>
+                </div>
+              </div>
+              <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+            </Link>
+
+            {/* Price + enroll (desktop sidebar CTA) */}
+            {!isEnrolled && (
+              <div className="border border-border/50 rounded-xl bg-card p-5 space-y-4">
+                <div className="flex items-baseline justify-between">
+                  <span className="text-2xl font-bold">${course.price}</span>
+                  <span className="text-xs text-muted-foreground">Full lifetime access</span>
+                </div>
+                <Link href={`/checkout/${course.slug}`} className="block">
+                  <button className="w-full h-11 bg-foreground text-background rounded-xl font-semibold text-sm hover:opacity-85 transition-all">
+                    Enroll Now
+                  </button>
+                </Link>
+                <p className="text-xs text-muted-foreground flex items-center justify-center gap-1.5">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
+                  30-day money-back guarantee
+                </p>
+              </div>
+            )}
+
+            {isEnrolled && (
+              <Link href={`/learn/${course.slug}`} className="block">
+                <button className="w-full h-11 bg-primary text-primary-foreground rounded-xl font-semibold text-sm hover:opacity-90 transition-all">
+                  Continue Learning →
+                </button>
+              </Link>
+            )}
           </div>
         </div>
-      </section>
+      </div>
 
-      {/* Related Courses Section */}
+      {/* ── RELATED COURSES ── */}
       {relatedCourses.length > 0 && (
-         <section className="bg-muted/20 py-32 border-t border-border/40">
-            <div className="container mx-auto px-6">
-               <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-16 px-2">
-                  <div className="space-y-4">
-                     <div className="flex items-center gap-2 text-primary font-black text-[10px] uppercase tracking-[0.2em]">
-                        <Sparkles className="h-4 w-4" /> Recommended Pathways
-                     </div>
-                     <h2 className="text-4xl md:text-5xl font-black tracking-tight">Academic <span className="text-primary">Curations.</span></h2>
-                     <p className="text-muted-foreground font-medium text-lg max-w-xl">Intelligent recommendations tailored for high-growth technical careers.</p>
-                  </div>
-                  <Link href="/courses">
-                     <button className="h-14 px-8 bg-foreground text-background dark:bg-background dark:text-foreground rounded-2xl font-black text-xs uppercase tracking-widest hover:scale-105 transition-all">Explore Entire Academy</button>
-                  </Link>
-               </div>
-               <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
-                  {relatedCourses.map((related) => (
-                     <Link href={`/courses/${related.slug}`} key={related.id} className="saas-card group !p-0 overflow-hidden border-none bg-card shadow-lg hover:shadow-2xl transition-all">
-                        <div className="aspect-video relative overflow-hidden bg-muted">
-                           <img src={related.thumbnailUrl || "/no_image.jpg"} className="object-cover w-full h-full group-hover:scale-110 transition-transform duration-700" alt={related.title} />
-                           <div className="absolute top-4 right-4 h-10 w-10 bg-white/20 backdrop-blur-xl rounded-xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all">
-                              <ArrowRight className="h-5 w-5 text-white" />
-                           </div>
-                        </div>
-                        <div className="p-8 space-y-6">
-                           <div className="space-y-2">
-                              <h3 className="text-lg font-black leading-tight group-hover:text-primary transition-colors line-clamp-2">{related.title}</h3>
-                              <p className="text-[10px] font-black text-primary uppercase tracking-widest">{related.instructor.name}</p>
-                           </div>
-                           <div className="flex items-center justify-between pt-4 border-t border-border/40">
-                              <div className="flex items-center gap-2 font-black text-[10px] text-amber-500 bg-amber-500/5 px-2.5 py-1 rounded-lg">
-                                 <Star className="h-3.5 w-3.5 fill-current" /> 4.9
-                              </div>
-                              <p className="font-black text-xl tracking-tight">${related.price}</p>
-                           </div>
-                        </div>
-                     </Link>
-                  ))}
-               </div>
+        <div className="border-t border-border/40 bg-muted/20">
+          <div className="max-w-screen-xl mx-auto px-6 py-12">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="font-bold text-lg">Students also bought</h2>
+              <Link href="/courses" className="text-sm text-primary hover:underline font-medium">Browse all</Link>
             </div>
-         </section>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {relatedCourses.map(related => (
+                <Link key={related.id} href={`/courses/${related.slug}`}
+                  className="group block border border-border/50 rounded-xl overflow-hidden bg-card hover:shadow-md hover:border-border/80 transition-all"
+                >
+                  <div className="aspect-video relative overflow-hidden bg-muted">
+                    <img src={related.thumbnailUrl || "/no_image.jpg"} alt={related.title}
+                      className="object-cover w-full h-full group-hover:scale-[1.04] transition-transform duration-500" />
+                  </div>
+                  <div className="p-4 space-y-1.5">
+                    <h3 className="text-sm font-semibold line-clamp-2 group-hover:text-primary transition-colors leading-snug">{related.title}</h3>
+                    <p className="text-xs text-muted-foreground">{related.instructor.name}</p>
+                    <div className="flex items-center gap-1 text-xs">
+                      <span className="font-semibold text-foreground/80">4.8</span>
+                      <Star className="w-3 h-3 fill-[#f59e0b] text-[#f59e0b]" />
+                      <span className="text-muted-foreground">({(related._count?.reviews || 0).toLocaleString()})</span>
+                    </div>
+                    <p className="font-bold text-sm pt-0.5">${related.price}</p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </div>
       )}
 
-      {/* FAQ Section */}
-      <section className="bg-white dark:bg-[#1A1A1A] py-32 border-t border-border/40">
-        <div className="container mx-auto px-6 grid lg:grid-cols-2 gap-24">
-           <div className="space-y-12">
-              <div className="space-y-4">
-                 <h3 className="text-3xl font-black tracking-tight">Technical Clarifications</h3>
-                 <p className="text-muted-foreground font-medium">Common inquiries regarding program structure and access.</p>
-              </div>
-              <Accordion type="single" collapsible className="w-full space-y-4">
-                <AccordionItem value="item-1" className="saas-card !p-0 border-none bg-muted/20 overflow-hidden">
-                  <AccordionTrigger className="text-base font-black hover:no-underline hover:text-primary px-8 py-6">Academic Access Parameters</AccordionTrigger>
-                  <AccordionContent className="text-base text-muted-foreground leading-relaxed px-8 pb-8 font-medium">You gain indefinite lifetime access to all core curriculum materials, including all subsequent technical updates and expert sessions.</AccordionContent>
-                </AccordionItem>
-                <AccordionItem value="item-2" className="saas-card !p-0 border-none bg-muted/20 overflow-hidden">
-                  <AccordionTrigger className="text-base font-black hover:no-underline hover:text-primary px-8 py-6">Certification Validation</AccordionTrigger>
-                  <AccordionContent className="text-base text-muted-foreground leading-relaxed px-8 pb-8 font-medium">Upon successful program completion, a cryptographically verified digital certificate is issued, compatible with professional networking platforms.</AccordionContent>
-                </AccordionItem>
-              </Accordion>
-           </div>
-           
-           <div className="saas-card p-14 border-none bg-primary shadow-2xl shadow-primary/20 space-y-8 flex flex-col justify-center relative overflow-hidden group">
-              <div className="absolute -right-10 -bottom-10 h-64 w-64 bg-white/5 rounded-full blur-[100px] group-hover:bg-white/10 transition-all duration-1000" />
-              <div className="relative z-10 space-y-6">
-                 <div className="w-16 h-16 bg-white/10 backdrop-blur-xl rounded-2xl flex items-center justify-center text-white shadow-inner">
-                   <Share2 className="w-8 h-8" />
-                 </div>
-                 <div className="space-y-3">
-                    <h3 className="text-4xl font-black text-white tracking-tight">Empower an Associate.</h3>
-                    <p className="text-lg text-primary-foreground/80 font-medium leading-relaxed">Transmit this technical mastery to a colleague or associate via our professional gifting infrastructure.</p>
-                 </div>
-                 <button className="w-fit mt-6 h-16 px-12 bg-white text-primary rounded-2xl font-black text-xs uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-xl shadow-black/10">Initialize Corporate Gift</button>
-              </div>
-           </div>
+      {/* ── MOBILE STICKY BAR ── */}
+      <div className="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-card/95 backdrop-blur-lg border-t border-border px-4 py-3 flex items-center gap-3 shadow-2xl">
+        <div className="shrink-0">
+          <p className="text-[10px] text-muted-foreground">Price</p>
+          <p className="text-lg font-bold">${course.price}</p>
         </div>
-      </section>
+        <Link href={isEnrolled ? `/learn/${course.slug}` : `/checkout/${course.slug}`} className="flex-1">
+          <button className="w-full h-11 bg-foreground text-background rounded-xl font-semibold text-sm hover:opacity-85 transition-all">
+            {isEnrolled ? "Continue Learning" : "Start Learning"}
+          </button>
+        </Link>
+      </div>
     </div>
   );
 }

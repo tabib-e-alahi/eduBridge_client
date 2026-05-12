@@ -2,6 +2,7 @@
 
 import { Tabs as TabsPrimitive } from "@base-ui/react/tabs"
 import { cva, type VariantProps } from "class-variance-authority"
+import { Slot } from "@radix-ui/react-slot"
 
 import { cn } from "@/lib/utils"
 
@@ -53,7 +54,21 @@ function TabsList({
   )
 }
 
-function TabsTrigger({ className, ...props }: TabsPrimitive.Tab.Props) {
+function TabsTrigger({
+  className,
+  asChild,
+  ...props
+}: TabsPrimitive.Tab.Props & { asChild?: boolean }) {
+  if (asChild) {
+    return (
+      <Slot
+        data-slot="tabs-trigger"
+        className={typeof className === "function" ? undefined : className}
+        style={typeof props.style === "function" ? undefined : props.style}
+        {...(props as any)}
+      />
+    )
+  }
   return (
     <TabsPrimitive.Tab
       data-slot="tabs-trigger"

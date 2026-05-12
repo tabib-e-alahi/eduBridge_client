@@ -28,6 +28,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { Separator } from "@/components/ui/separator";
 
 export default function InstructorReviewsPage() {
   const { data: reviewsData, isLoading, isError, refetch } = useInstructorReviews();
@@ -40,8 +41,8 @@ export default function InstructorReviewsPage() {
   const reviews = reviewsData?.data || [];
   const filteredReviews = reviews.filter((r) => {
     const matchesRating = ratingFilter === "ALL" || r.rating.toString() === ratingFilter;
-    const matchesSearch = r.course.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          r.comment.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = r.course?.title?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                          r.comment?.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesRating && matchesSearch;
   });
 
@@ -99,19 +100,6 @@ export default function InstructorReviewsPage() {
             />
          </div>
          <div className="flex items-center gap-3 w-full md:w-auto">
-            <Select value={ratingFilter} onValueChange={setRatingFilter}>
-               <SelectTrigger className="h-11 w-[160px] rounded-[0.75rem] bg-background border-none font-bold text-xs uppercase tracking-widest">
-                  <SelectValue placeholder="All Ratings" />
-               </SelectTrigger>
-               <SelectContent className="font-bold">
-                  <SelectItem value="ALL">All Ratings</SelectItem>
-                  <SelectItem value="5">5 Stars</SelectItem>
-                  <SelectItem value="4">4 Stars</SelectItem>
-                  <SelectItem value="3">3 Stars</SelectItem>
-                  <SelectItem value="2">2 Stars</SelectItem>
-                  <SelectItem value="1">1 Star</SelectItem>
-               </SelectContent>
-            </Select>
             <Button variant="outline" size="icon" className="h-11 w-11 rounded-[0.75rem] bg-background border-none"><Filter className="h-4 w-4" /></Button>
          </div>
       </div>
@@ -123,11 +111,11 @@ export default function InstructorReviewsPage() {
               <div className="flex flex-col md:flex-row gap-6">
                  <div className="flex items-start gap-4 md:w-64 shrink-0 border-b md:border-b-0 md:border-r border-muted-foreground/10 pb-4 md:pb-0 md:pr-6">
                     <Avatar className="h-12 w-12 rounded-[0.75rem] border">
-                       <AvatarImage src={review.user.image} />
-                       <AvatarFallback className="font-black text-xs">{review.user.name.charAt(0)}</AvatarFallback>
+                       <AvatarImage src={review.user?.image} />
+                       <AvatarFallback className="font-black text-xs">{review.user?.name?.charAt(0) || "?"}</AvatarFallback>
                     </Avatar>
                     <div className="min-w-0">
-                       <p className="text-sm font-black truncate">{review.user.name}</p>
+                       <p className="text-sm font-black truncate">{review.user?.name || "Anonymous"}</p>
                        <p className="text-[10px] font-bold text-muted-foreground uppercase mt-0.5 tracking-wider">Student</p>
                        <div className="flex gap-0.5 text-amber-500 mt-2">
                           {[...Array(5)].map((_, i) => (
@@ -140,7 +128,7 @@ export default function InstructorReviewsPage() {
                  <div className="flex-1 space-y-4 pt-1">
                     <div className="flex justify-between items-start">
                        <Badge variant="outline" className="font-black text-[9px] uppercase tracking-widest bg-primary/5 text-primary border-none px-2 py-1">
-                          {review.course.title}
+                          {review.course?.title || "Unknown Course"}
                        </Badge>
                        <span className="text-[10px] font-black text-muted-foreground uppercase">{new Date(review.createdAt).toLocaleDateString()}</span>
                     </div>

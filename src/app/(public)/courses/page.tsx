@@ -244,7 +244,12 @@ function CoursesContent() {
                             <span className="text-foreground">4.8</span>
                             <span className="text-muted-foreground font-medium text-xs ml-1">(1.2k)</span>
                           </div>
-                          <p className="text-lg font-extrabold text-foreground">${course.price}</p>
+                          <div className="text-right">
+                             <Link href={`/mentors/${course.instructor.id}`} className="block text-[10px] font-black text-primary uppercase tracking-widest hover:underline mb-1">
+                               {course.instructor.name}
+                             </Link>
+                             <p className="text-lg font-extrabold text-foreground">${course.price}</p>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -265,12 +270,13 @@ function CoursesContent() {
                       </Button>
                       
                       <div className="flex items-center gap-1 px-2">
-                        {Array.from({ length: Math.min(5, data.meta.totalPage) }).map((_, idx) => {
+                        {Array.from({ length: Math.min(5, data?.meta?.totalPage || 0) }).map((_, idx) => {
                           let pageNum = idx + 1;
+                          const totalPage = data?.meta?.totalPage || 0;
                           // simple windowing logic for demo
-                          if (data.meta.totalPage > 5 && page > 3) {
+                          if (totalPage > 5 && page > 3) {
                              pageNum = page - 2 + idx;
-                             if (pageNum > data.meta.totalPage) pageNum = data.meta.totalPage - (4 - idx);
+                             if (pageNum > totalPage) pageNum = totalPage - (4 - idx);
                           }
                           return (
                             <Button
@@ -291,7 +297,7 @@ function CoursesContent() {
                       <Button 
                         variant="ghost"
                         size="icon"
-                        disabled={page === data.meta.totalPage}
+                        disabled={page === (data?.meta?.totalPage || 0)}
                         onClick={() => updateParams({ page: page + 1 })}
                         className="text-muted-foreground"
                       >

@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { Select as SelectPrimitive } from "@base-ui/react/select"
+import { Slot } from "@radix-ui/react-slot"
 
 import { cn } from "@/lib/utils"
 import { ChevronDownIcon, CheckIcon, ChevronUpIcon } from "lucide-react"
@@ -31,11 +32,26 @@ function SelectValue({ className, ...props }: SelectPrimitive.Value.Props) {
 function SelectTrigger({
   className,
   size = "default",
+  asChild = false,
   children,
   ...props
 }: SelectPrimitive.Trigger.Props & {
   size?: "sm" | "default"
+  asChild?: boolean
 }) {
+  if (asChild) {
+    return (
+      <Slot
+        data-slot="select-trigger"
+        data-size={size}
+        className={typeof className === "function" ? undefined : className}
+        style={typeof props.style === "function" ? undefined : props.style}
+        {...(props as any)}
+      >
+        {children}
+      </Slot>
+    )
+  }
   return (
     <SelectPrimitive.Trigger
       data-slot="select-trigger"

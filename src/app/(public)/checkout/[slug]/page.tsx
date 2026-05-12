@@ -4,7 +4,7 @@ import { use, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useCourseBySlug } from "@/hooks/useCourses";
 import { useCreateOrder, useCheckout } from "@/hooks/useOrders";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/lib/auth-client";
 import { Loading } from "@/components/shared/Loading";
 import { ErrorState } from "@/components/shared/ErrorState";
 import { Button } from "@/components/ui/button";
@@ -18,7 +18,8 @@ import Image from "next/image";
 export default function CheckoutPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params);
   const router = useRouter();
-  const { user, isLoading: isAuthLoading } = useAuth();
+  const { data: session, isPending: isAuthLoading } = useAuth();
+  const user = session?.user;
   
   const { data: courseData, isLoading: isCourseLoading, isError } = useCourseBySlug(slug);
   const createOrderMutation = useCreateOrder();
@@ -39,7 +40,7 @@ export default function CheckoutPage({ params }: { params: Promise<{ slug: strin
         }
       });
     }
-  }, [user, courseId]);
+  }, [user, courseId, order, createOrderMutation]);
 
   if (isAuthLoading || isCourseLoading) return <Loading />;
   
@@ -49,8 +50,6 @@ export default function CheckoutPage({ params }: { params: Promise<{ slug: strin
   }
 
   if (isError || !course) return <ErrorState message="Failed to load course details." />;
-
-  const course = courseData?.data;
 
   const handleSimulatePayment = () => {
     if (!order) return;

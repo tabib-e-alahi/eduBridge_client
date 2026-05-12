@@ -115,8 +115,6 @@ export function DashboardSidebar({ role, className }: SidebarProps) {
           <Settings className="h-4 w-4" />
           Settings
         </Link>
-          Settings
-        </Link>
         <button 
           onClick={handleLogout}
           className="sidebar-item sidebar-item-inactive w-full text-left text-destructive hover:bg-destructive/5 transition-colors"

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -26,7 +27,7 @@ import { useRouter } from "next/navigation";
 export function Navbar() {
   const { data: session, isPending } = useAuth();
   const isLoggedIn = !!session;
-  const role = session?.user?.role || "USER";
+  const role = (session?.user as any)?.role || "USER";
   const router = useRouter();
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
@@ -57,7 +58,7 @@ export function Navbar() {
           <div className="flex items-center gap-10">
             <Link href="/" className="flex items-center gap-2.5 transition-transform hover:scale-[1.02] active:scale-95">
               <div className="w-9 h-9 bg-primary rounded-lg flex items-center justify-center shadow-lg shadow-primary/20">
-                <BookOpen className="text-primary-foreground w-5 h-5" />
+                <BookOpen className="text-white w-5 h-5" />
               </div>
               <span className="text-xl font-extrabold tracking-tight text-foreground">
                 EduBridge<span className="text-primary">AI</span>
@@ -101,21 +102,21 @@ export function Navbar() {
                 <div className="flex items-center gap-4">
                   <NotificationBell />
                   <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="relative h-10 w-10 rounded-full border border-border p-0 overflow-hidden transition-all hover:ring-2 hover:ring-primary/20">
-                        <Avatar className="h-full w-full">
-                          <AvatarImage src="" alt="User" />
-                          <AvatarFallback className="font-bold text-xs bg-muted text-muted-foreground">JD</AvatarFallback>
-                        </Avatar>
-                      </Button>
+                    <DropdownMenuTrigger className="relative h-10 w-10 rounded-full border border-border overflow-hidden transition-all hover:ring-2 hover:ring-primary/20 outline-none">
+                      <Avatar className="h-full w-full">
+                        <AvatarImage src={session?.user?.image || ""} alt={session?.user?.name || "User"} />
+                        <AvatarFallback className="font-bold text-xs bg-muted text-muted-foreground">{session?.user?.name?.charAt(0)}</AvatarFallback>
+                      </Avatar>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent className="w-64 rounded-xl p-2 mt-4 border-border shadow-xl" align="end">
-                      <DropdownMenuLabel className="p-4">
-                        <div className="flex flex-col space-y-1">
-                          <p className="text-sm font-bold leading-none">{session?.user?.name}</p>
-                          <p className="text-xs text-muted-foreground mt-1 capitalize">{role.toLowerCase()} Account</p>
-                        </div>
-                      </DropdownMenuLabel>
+                      <DropdownMenuGroup>
+                        <DropdownMenuLabel className="p-4">
+                          <div className="flex flex-col space-y-1">
+                            <p className="text-sm font-bold leading-none">{session?.user?.name}</p>
+                            <p className="text-xs text-muted-foreground mt-1 capitalize">{role.toLowerCase()} Account</p>
+                          </div>
+                        </DropdownMenuLabel>
+                      </DropdownMenuGroup>
                       <DropdownMenuSeparator />
                       <div className="p-1 space-y-1">
                         <DropdownMenuItem asChild className="rounded-lg p-2.5 font-medium cursor-pointer transition-colors focus:bg-primary/5 focus:text-primary">
@@ -159,6 +160,59 @@ export function Navbar() {
             {/* Mobile Menu */}
             <div className="md:hidden flex items-center gap-3">
               <ModeToggle />
+              
+              {isLoggedIn && (
+                <>
+                  <NotificationBell />
+                  <DropdownMenu>
+                    <DropdownMenuTrigger className="relative h-9 w-9 rounded-full border border-border overflow-hidden transition-all hover:ring-2 hover:ring-primary/20 outline-none">
+                      <Avatar className="h-full w-full">
+                        <AvatarImage src={session?.user?.image || ""} alt={session?.user?.name || "User"} />
+                        <AvatarFallback className="font-bold text-xs bg-muted text-muted-foreground">{session?.user?.name?.charAt(0)}</AvatarFallback>
+                      </Avatar>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="w-56 rounded-xl p-2 mt-4 border-border shadow-xl" align="end">
+                      <DropdownMenuGroup>
+                        <DropdownMenuLabel className="p-3">
+                          <div className="flex flex-col space-y-1">
+                            <p className="text-sm font-bold leading-none">{session?.user?.name}</p>
+                            <p className="text-[10px] text-muted-foreground mt-1 uppercase tracking-widest">{role} Account</p>
+                          </div>
+                        </DropdownMenuLabel>
+                      </DropdownMenuGroup>
+                      <DropdownMenuSeparator />
+                      <div className="p-1 space-y-1">
+                        <DropdownMenuItem asChild className="rounded-lg p-2.5 font-medium cursor-pointer focus:bg-primary/5 focus:text-primary">
+                          <Link href="/user/profile" className="flex items-center gap-3">
+                            <UserIcon className="h-4 w-4" />
+                            Profile
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild className="rounded-lg p-2.5 font-medium cursor-pointer focus:bg-primary/5 focus:text-primary">
+                          <Link href={role === "ADMIN" ? "/admin" : role === "MANAGER" || role === "INSTRUCTOR" ? "/manager" : "/user"} className="flex items-center gap-3">
+                            <LayoutDashboard className="h-4 w-4" />
+                            Dashboard
+                          </Link>
+                        </DropdownMenuItem>
+                      </div>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem 
+                        onClick={async () => {
+                          await authClient.signOut();
+                          router.push("/login");
+                        }} 
+                        className="rounded-lg p-2.5 font-medium text-destructive cursor-pointer focus:bg-destructive/5 focus:text-destructive"
+                      >
+                        <div className="flex items-center gap-3">
+                          <LogOut className="h-4 w-4" />
+                          Sign out
+                        </div>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </>
+              )}
+
               <Sheet>
                 <SheetTrigger asChild>
                   <Button variant="ghost" size="icon" className="h-10 w-10 rounded-lg hover:bg-muted/50 border border-border">

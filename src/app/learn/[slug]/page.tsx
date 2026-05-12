@@ -32,7 +32,7 @@ export default function LessonPlayerPage() {
   const { slug } = useParams();
   const courseSlug = Array.isArray(slug) ? slug[0] : slug;
   
-  const { data: progressData, isLoading, isError, refetch } = useCourseProgress(courseSlug);
+  const { data: progressData, isLoading, isError, refetch } = useCourseProgress(courseSlug as string);
   const updateProgressMutation = useUpdateProgress();
 
   const [activeLesson, setActiveLesson] = useState<any>(null);

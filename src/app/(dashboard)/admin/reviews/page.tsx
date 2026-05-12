@@ -44,9 +44,9 @@ export default function AdminReviewModerationPage() {
 
   const reviews = reviewsData?.data || [];
   const filteredReviews = reviews.filter((r) => {
-    const matchesSearch = r.user.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          r.course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          r.comment.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = r.user?.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                          r.course?.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          r.comment?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === "ALL" || 
                           (statusFilter === "HIDDEN" && r.isHidden) || 
                           (statusFilter === "VISIBLE" && !r.isHidden);
@@ -123,12 +123,12 @@ export default function AdminReviewModerationPage() {
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       <Avatar className="h-10 w-10 rounded-[0.75rem] border border-muted-foreground/10">
-                        <AvatarImage src={review.user.image} />
-                        <AvatarFallback className="font-black text-xs">{review.user.name.charAt(0)}</AvatarFallback>
+                        <AvatarImage src={review.user?.image} />
+                        <AvatarFallback className="font-black text-xs">{review.user?.name?.charAt(0) || "?"}</AvatarFallback>
                       </Avatar>
                       <div className="min-w-0">
-                        <p className="text-sm font-black truncate">{review.user.name}</p>
-                        <p className="text-[10px] font-bold text-primary truncate uppercase tracking-wider">{review.course.title}</p>
+                        <p className="text-sm font-black truncate">{review.user?.name || "Anonymous"}</p>
+                        <p className="text-[10px] font-bold text-primary truncate uppercase tracking-wider">{review.course?.title || "Unknown Course"}</p>
                       </div>
                     </div>
                   </td>

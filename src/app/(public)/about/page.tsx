@@ -103,7 +103,7 @@ export default function AboutPage() {
                  </p>
                </div>
                <div className="flex gap-4 pt-4">
-                  <Button className="h-12 px-8 font-bold text-base bg-primary hover:opacity-90 rounded-[0.625rem]">
+                  <Button className="h-12 px-8 font-bold text-base bg-primary hover:opacity-90 rounded-lg">
                     Join the Platform
                   </Button>
                </div>
@@ -115,18 +115,18 @@ export default function AboutPage() {
               viewport={{ once: true }}
               className="relative"
             >
-               <div className="relative aspect-[4/3] rounded-2xl overflow-hidden border border-border shadow-2xl">
+               <div className="relative aspect-4/3 rounded-2xl overflow-hidden border border-border shadow-2xl">
                   <Image 
                     src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=2071&auto=format&fit=crop" 
                     alt="Team collaboration" 
                     fill 
                     className="object-cover"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent" />
+                  <div className="absolute inset-0 bg-linear-to-t from-background/80 via-transparent to-transparent" />
                </div>
                
                {/* Floating Badge */}
-               <div className="absolute -bottom-6 -left-6 bg-card border border-border p-4 rounded-[0.625rem] shadow-xl flex items-center gap-4">
+               <div className="absolute -bottom-6 -left-6 bg-card border border-border p-4 rounded-lg shadow-xl flex items-center gap-4">
                   <div className="w-12 h-12 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
                      <CheckCircle2 className="w-6 h-6" />
                   </div>
@@ -151,7 +151,7 @@ export default function AboutPage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.1 }}
-                className="saas-card p-8 rounded-[0.625rem] space-y-4 text-center md:text-left flex flex-col items-center md:items-start"
+                className="saas-card p-8 rounded-lg space-y-4 text-center md:text-left flex flex-col items-center md:items-start"
               >
                 <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center text-primary mb-2">
                   <value.icon className="w-7 h-7" />
@@ -182,7 +182,7 @@ export default function AboutPage() {
       {/* Final CTA */}
       <section className="py-24 bg-[#FDFCF8] dark:bg-[#262626] border-t border-border mt-auto">
          <div className="container mx-auto px-4 md:px-6">
-            <div className="max-w-4xl mx-auto bg-primary rounded-[1rem] p-10 md:p-16 text-center text-primary-foreground shadow-xl shadow-primary/20 space-y-8 relative overflow-hidden">
+            <div className="max-w-4xl mx-auto bg-primary rounded-2xl p-10 md:p-16 text-center text-primary-foreground shadow-xl shadow-primary/20 space-y-8 relative overflow-hidden">
                <div className="relative z-10 space-y-4">
                   <h2 className="text-3xl md:text-5xl font-extrabold tracking-tight leading-tight">Ready to transform <br />your career?</h2>
                   <p className="text-lg text-primary-foreground/80 font-medium max-w-2xl mx-auto">

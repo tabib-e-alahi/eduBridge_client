@@ -4,22 +4,11 @@ import { useState } from "react";
 import { useAdminStudents, useUpdateUserStatus, useUpdateUserRole } from "@/hooks/useAdminData";
 import { Loading } from "@/components/shared/Loading";
 import { ErrorState } from "@/components/shared/ErrorState";
-import { 
-  Users,
-  Search, 
-  Filter,
-  MoreVertical,
-  ShieldAlert,
-  ShieldCheck,
-  Ban,
-  CheckCircle2,
-  Mail,
-  GraduationCap
-} from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Search, Mail, Filter, Ban, CheckCircle2, MoreVertical, ShieldAlert, ShieldCheck } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -40,7 +29,14 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
+
+export default function StudentsPage() {
+  const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
+
+  const { data: studentsData, isLoading, isError, refetch } = useAdminStudents();
+  const updateStatusMutation = useUpdateUserStatus();
+  const updateRoleMutation = useUpdateUserRole();
 
   if (isLoading) return <Loading />;
   if (isError) return <ErrorState onRetry={() => refetch()} />;
@@ -79,15 +75,16 @@ import { cn } from "@/lib/utils";
          <div className="flex items-center gap-3 w-full md:w-auto">
             <div className="flex bg-background rounded-[0.75rem] p-1 border border-muted-foreground/10">
                {["ALL", "ACTIVE", "BLOCKED"].map((filter) => (
-                 <Button 
+                 <button 
                    key={filter}
-                   variant={statusFilter === filter ? 'secondary' : 'ghost'} 
-                   size="sm" 
-                   className="rounded-[0.5rem] font-bold text-[10px] uppercase px-4 h-9"
+                   className={cn(
+                     "rounded-[0.5rem] font-bold text-[10px] uppercase px-4 h-9 transition-colors",
+                     statusFilter === filter ? 'bg-secondary text-secondary-foreground shadow-sm' : 'hover:bg-muted text-muted-foreground'
+                   )}
                    onClick={() => setStatusFilter(filter)}
                  >
                     {filter}
-                 </Button>
+                 </button>
                ))}
             </div>
             <Button variant="outline" size="icon" className="h-11 w-11 rounded-[0.75rem] bg-background border-none"><Filter className="h-4 w-4" /></Button>
@@ -125,13 +122,13 @@ import { cn } from "@/lib/utils";
                     <div className="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
                       <span className="flex items-center gap-1.5"><Mail className="h-3 w-3" /> {student.email}</span>
                       {/* @ts-ignore - profile phone injected by DTO */}
-                      {student.profile?.phone && <span className="flex items-center gap-1.5 opacity-60">{student.profile.phone}</span>}
+                      {(student as any).profile?.phone && <span className="flex items-center gap-1.5 opacity-60">{(student as any).profile.phone}</span>}
                     </div>
                   </td>
                   <td className="px-6 py-4">
                      <div className="flex items-center gap-4 text-xs font-bold text-muted-foreground">
                         <div className="flex flex-col">
-                           <span className="text-foreground">{/* @ts-ignore */ student._count?.enrollments || 0}</span>
+                           <span className="text-foreground">{(student as any)._count?.enrollments || 0}</span>
                            <span className="text-[9px] uppercase tracking-widest">Courses</span>
                         </div>
                      </div>

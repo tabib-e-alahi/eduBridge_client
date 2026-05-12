@@ -17,6 +17,33 @@ export interface Category {
   };
 }
 
+export interface Lesson {
+  id: string;
+  title: string;
+  slug: string;
+  content?: string;
+  videoUrl?: string;
+  duration?: string;
+  order: number;
+  courseId: string;
+}
+
+export interface Assignment {
+  id: string;
+  title: string;
+  description?: string;
+  type?: string;
+  courseId: string;
+}
+
+export interface Quiz {
+  id: string;
+  title: string;
+  description?: string;
+  questionsCount?: number;
+  courseId: string;
+}
+
 export interface Course {
   id: string;
   title: string;
@@ -25,11 +52,26 @@ export interface Course {
   price: number;
   level: string;
   thumbnailUrl: string;
-  instructor: Partial<User>;
+  instructor: {
+    id: string;
+    name: string;
+    image?: string;
+  };
   category: Partial<Category>;
+  lessons?: Lesson[];
+  assignments?: Assignment[];
+  quizzes?: Quiz[];
+  instructorId?: string;
+  reviews?: Review[];
+  status?: 'DRAFT' | 'PUBLISHED' | 'PENDING' | 'REJECTED' | 'IN_REVIEW' | 'ARCHIVED';
   rating?: number;
   enrolledCount?: number;
   updatedAt: string;
+  _count?: {
+    enrollments?: number;
+    reviews?: number;
+    lessons?: number;
+  };
 }
 
 export interface Enrollment {
@@ -50,6 +92,23 @@ export interface ActivityItem {
 export interface SavedCourse {
   id: string;
   course: Course;
+}
+
+export interface Review {
+  id: string;
+  rating: number;
+  comment?: string;
+  isRecommended?: boolean;
+  userId: string;
+  isHidden?: boolean;
+  user: {
+    id: string;
+    name: string;
+    image?: string;
+  };
+  courseId: string;
+  course: Partial<Course>;
+  createdAt: string;
 }
 
 export interface ApiResponse<T> {

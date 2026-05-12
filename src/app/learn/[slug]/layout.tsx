@@ -22,12 +22,12 @@ export default function LearnLayout({
             </Button>
           </Link>
           <div className="w-px h-6 bg-border mx-1 hidden sm:block" />
-          <div className="flex items-center gap-2 group cursor-pointer">
+          <Link href={"/"} className="flex items-center gap-2 group cursor-pointer">
              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center transition-transform group-hover:rotate-3">
                 <GraduationCap className="h-5 w-5 text-primary-foreground" />
              </div>
              <span className="font-black tracking-tight hidden sm:block">EduBridge AI</span>
-          </div>
+          </Link>
         </div>
         
         <div className="flex items-center gap-3">

@@ -30,6 +30,8 @@ export interface InstructorDashboardData {
   coursePerformance: CoursePerformance[];
   charts: {
     monthlyEnrollments: { month: string; count: number }[];
+    ratingDistribution: { name: string; count: number }[];
+    completionRates: { name: string; rate: number }[];
   };
 }
 
@@ -91,7 +93,7 @@ export const useUpdateCourse = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, payload }: { id: string; payload: Partial<Course> }) => {
+    mutationFn: async ({ id, payload }: { id: string; payload: any }) => {
       const { data } = await api.patch<ApiResponse<Course>>(`/courses/${id}`, payload);
       return data;
     },

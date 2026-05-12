@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useMyCourses, useDeleteCourse } from "@/hooks/useInstructorData";
+import { useMyCourses, useDeleteCourse, useUpdateCourse } from "@/hooks/useInstructorData";
 import { Loading } from "@/components/shared/Loading";
 import { ErrorState } from "@/components/shared/ErrorState";
 import {
@@ -19,7 +19,9 @@ import {
   ExternalLink,
   ChevronRight,
   TrendingUp,
-  FileText
+  FileText,
+  CheckCircle2,
+  AlertTriangle
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -42,14 +44,30 @@ import {
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
+import { useAuth } from "@/lib/auth-client";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+
 export default function InstructorCoursesPage() {
+  const { data: session, isPending: isAuthLoading } = useAuth();
+  const router = useRouter();
   const { data: coursesData, isLoading, isError, refetch } = useMyCourses();
   const deleteMutation = useDeleteCourse();
+  const updateMutation = useUpdateCourse();
+  
   const [searchTerm, setSearchTerm] = useState("");
   const [viewMode, setViewMode] = useState<"grid" | "list">("list");
   const [statusFilter, setStatusFilter] = useState("ALL");
 
-  if (isLoading) return <Loading />;
+  useEffect(() => {
+    if (!isAuthLoading && !session) {
+      router.push("/auth/login");
+    } else if (session && !["INSTRUCTOR", "MANAGER", "ADMIN"].includes((session.user as any).role)) {
+      router.push("/dashboard");
+    }
+  }, [session, isAuthLoading, router]);
+
+  if (isLoading || isAuthLoading) return <Loading />;
   if (isError) return <ErrorState onRetry={() => refetch()} />;
 
   const courses = coursesData?.data || [];
@@ -63,6 +81,7 @@ export default function InstructorCoursesPage() {
     switch(status) {
       case "PUBLISHED": return <Badge className="bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 border-none font-black text-[9px] uppercase tracking-widest px-2">Live</Badge>;
       case "DRAFT": return <Badge className="bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 border-none font-black text-[9px] uppercase tracking-widest px-2">Draft</Badge>;
+      case "PENDING": return <Badge className="bg-blue-500/10 text-blue-600 hover:bg-blue-500/20 border-none font-black text-[9px] uppercase tracking-widest px-2">Pending</Badge>;
       case "ARCHIVED": return <Badge className="bg-muted text-muted-foreground border-none font-black text-[9px] uppercase tracking-widest px-2">Archived</Badge>;
       default: return null;
     }
@@ -83,6 +102,26 @@ export default function InstructorCoursesPage() {
         </Link>
       </div>
 
+      {/* Stats Bar */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="saas-card p-4 border border-muted-foreground/10 bg-primary/5">
+           <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">Total Assets</p>
+           <p className="text-2xl font-black">{courses.length}</p>
+        </div>
+        <div className="saas-card p-4 border border-muted-foreground/10 bg-emerald-500/5">
+           <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">Total Audience</p>
+           <p className="text-2xl font-black">{courses.reduce((acc, c: any) => acc + (c._count?.enrollments || 0), 0)}</p>
+        </div>
+        <div className="saas-card p-4 border border-muted-foreground/10 bg-amber-500/5">
+           <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">Estimated Value</p>
+           <p className="text-2xl font-black">${courses.reduce((acc, c: any) => acc + (c.price * (c._count?.enrollments || 0)), 0).toLocaleString()}</p>
+        </div>
+        <div className="saas-card p-4 border border-muted-foreground/10 bg-blue-500/5">
+           <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">Published</p>
+           <p className="text-2xl font-black">{courses.filter((c: any) => c.status === "PUBLISHED").length}</p>
+        </div>
+      </div>
+
       {/* Filters Bar */}
       <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-muted/30 p-4 rounded-[1rem] border border-muted-foreground/10">
          <div className="relative w-full md:w-96">
@@ -95,7 +134,7 @@ export default function InstructorCoursesPage() {
             />
          </div>
          <div className="flex items-center gap-3 w-full md:w-auto">
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <Select value={statusFilter} onValueChange={(val) => setStatusFilter(val || "ALL")}>
                <SelectTrigger className="h-11 w-[160px] rounded-[0.625rem] bg-background/50 border-none font-bold text-xs uppercase tracking-widest">
                   <SelectValue placeholder="All Status" />
                </SelectTrigger>
@@ -103,6 +142,7 @@ export default function InstructorCoursesPage() {
                   <SelectItem value="ALL">All Status</SelectItem>
                   <SelectItem value="PUBLISHED">Published</SelectItem>
                   <SelectItem value="DRAFT">Draft</SelectItem>
+                  <SelectItem value="PENDING">Pending</SelectItem>
                   <SelectItem value="ARCHIVED">Archived</SelectItem>
                </SelectContent>
             </Select>
@@ -164,12 +204,12 @@ export default function InstructorCoursesPage() {
                          <td className="px-6 py-4 font-black text-sm text-emerald-600">
                             ${course.price.toFixed(2)}
                          </td>
-                         <td className="px-6 py-4">
+                          <td className="px-6 py-4">
                             <div className="flex items-center gap-1.5 font-black text-sm text-amber-500">
                                <Star className="h-4 w-4 fill-current" />
-                               <span>4.9</span>
+                               <span>{course._count?.reviews > 0 ? (course.rating || 0).toFixed(1) : "0.0"}</span>
                             </div>
-                         </td>
+                          </td>
                          <td className="px-6 py-4">
                             {getStatusBadge(course.status)}
                          </td>
@@ -194,6 +234,31 @@ export default function InstructorCoursesPage() {
                                      </Link>
                                   </DropdownMenuItem>
                                   <DropdownMenuSeparator />
+                                  <DropdownMenuLabel className="px-2 py-1.5 text-[10px] uppercase tracking-widest text-muted-foreground">State Controls</DropdownMenuLabel>
+                                  {course.status !== 'PUBLISHED' && (
+                                     <DropdownMenuItem 
+                                       className="gap-2 text-emerald-600 focus:text-emerald-600 cursor-pointer"
+                                       onClick={() => {
+                                         if(confirm("Are you sure you want to publish this course live?")) {
+                                            updateMutation.mutate({ id: course.id, payload: { status: 'PUBLISHED' } });
+                                         }
+                                       }}
+                                     >
+                                        <CheckCircle2 className="h-4 w-4" /> Go Live
+                                     </DropdownMenuItem>
+                                  )}
+                                  {course.status === 'PUBLISHED' && (
+                                     <DropdownMenuItem 
+                                       className="gap-2 text-amber-600 focus:text-amber-600 cursor-pointer"
+                                       onClick={() => {
+                                         if(confirm("Are you sure you want to revert this course to draft?")) {
+                                            updateMutation.mutate({ id: course.id, payload: { status: 'DRAFT' } });
+                                         }
+                                       }}
+                                     >
+                                        <AlertTriangle className="h-4 w-4" /> Revert to Draft
+                                     </DropdownMenuItem>
+                                  )}
                                   <DropdownMenuItem 
                                     className="gap-2 text-destructive focus:text-destructive cursor-pointer"
                                     onClick={() => deleteMutation.mutate(course.id)}
@@ -228,18 +293,24 @@ export default function InstructorCoursesPage() {
                     <div className="flex items-center justify-between text-sm font-black border-y py-3 border-muted-foreground/10">
                        <div className="flex items-center gap-1.5">
                           <Users className="h-4 w-4 text-primary" />
-                          <span>{course._count.enrollments} Students</span>
+                          <span>{course._count?.enrollments || 0} Students</span>
                        </div>
-                       <div className="text-emerald-600">${course.price.toFixed(2)}</div>
+                       <div className="flex items-center gap-1.5 text-amber-500">
+                          <Star className="h-4 w-4 fill-current" />
+                          <span>{course._count?.reviews > 0 ? (course.rating || 0).toFixed(1) : "0.0"}</span>
+                       </div>
+                    </div>
+                    <div className="flex items-center justify-between pt-4">
+                       <div className="text-emerald-600 font-black text-lg">${course.price.toFixed(2)}</div>
                     </div>
 
                     <div className="flex gap-2 pt-1">
-                       <Button asChild variant="outline" className="flex-1 h-10 rounded-[0.625rem] font-bold text-xs gap-2">
+                       <Button  variant="outline" className="flex-1 h-10 rounded-[0.625rem] font-bold text-xs gap-2">
                           <Link href={`/manager/courses/edit/${course.id}`}>
                              <Edit className="h-3.5 w-3.5" /> Edit
                           </Link>
                        </Button>
-                       <Button asChild className="h-10 w-10 rounded-[0.625rem] p-0 shrink-0">
+                       <Button  className="h-10 w-10 rounded-[0.625rem] p-0 shrink-0">
                           <Link href={`/learn/${course.slug}`} target="_blank">
                              <ExternalLink className="h-4 w-4" />
                           </Link>
