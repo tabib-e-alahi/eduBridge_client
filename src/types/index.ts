@@ -2,7 +2,7 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  role: 'USER' | 'INSTRUCTOR' | 'MANAGER' | 'ADMIN';
+  role: 'STUDENT' | 'INSTRUCTOR' | 'MANAGER' | 'ADMIN';
   image?: string;
 }
 
@@ -26,6 +26,14 @@ export interface Lesson {
   duration?: string;
   order: number;
   courseId: string;
+  resources?: LessonResource[];
+}
+
+export interface LessonResource {
+  id: string;
+  title: string;
+  url: string;
+  lessonId: string;
 }
 
 export interface Assignment {

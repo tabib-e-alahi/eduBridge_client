@@ -60,7 +60,7 @@ export default function CheckoutPage({ params }: { params: Promise<{ slug: strin
       checkoutMutation.mutate({
         orderId: order.id,
         transactionId: `txn_sim_${Math.random().toString(36).substring(7)}`,
-        method: "simulated_card"
+        paymentMethod: "simulated_card"
       }, {
         onSuccess: () => {
            router.push(`/learn/${course?.slug || course?.id}`);

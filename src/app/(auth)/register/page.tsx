@@ -40,10 +40,9 @@ export default function RegisterPage() {
         email,
         password,
         name,
-        // @ts-ignore - Better Auth additional fields
         role,
         callbackURL: "/verify-email"
-      });
+      } as any);
 
       if (error) {
         toast.error(error.message || "Failed to create account");
@@ -51,7 +50,7 @@ export default function RegisterPage() {
       }
 
       toast.success("Account created! Please verify your email.");
-      router.push("/verify-email");
+      router.push(`/verify-email?email=${encodeURIComponent(email)}`);
     } catch (err) {
       toast.error("Something went wrong");
     } finally {
@@ -63,7 +62,7 @@ export default function RegisterPage() {
     try {
       await authClient.signIn.social({
         provider,
-        callbackURL: "/dashboard"
+        callbackURL: "/user"
       });
     } catch (err) {
       toast.error(`Failed to sign in with ${provider}`);

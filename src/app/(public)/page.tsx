@@ -81,7 +81,7 @@ export default function Home() {
                   Explore Programs
                 </Button>
               </Link>
-              <Link href="/auth/register">
+              <Link href="/register">
                 <Button size="lg" variant="outline" className="px-8 h-14 font-bold text-base bg-white dark:bg-card">
                   Create Account
                 </Button>
@@ -124,6 +124,7 @@ export default function Home() {
                     src="/hero_learning_illustration.png" 
                     alt="EduBridge AI Platform Dashboard" 
                     fill 
+                    sizes="(max-width: 1024px) 100vw, 50vw"
                     className="object-cover transition-transform duration-700 group-hover:scale-105"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
@@ -546,7 +547,7 @@ export default function Home() {
                   <p className="text-muted-foreground text-lg md:text-xl font-medium max-w-2xl mx-auto">Join 25,000+ professionals today and master the skills of the future.</p>
                </div>
                <div className="flex flex-wrap justify-center gap-4">
-                  <Link href="/auth/register">
+                  <Link href="/register">
                     <Button size="lg" className="px-10 h-14 text-base font-bold shadow-sm">
                       Get Started Free
                     </Button>

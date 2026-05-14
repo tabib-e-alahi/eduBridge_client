@@ -65,7 +65,7 @@ export const PERMISSIONS = {
 export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
 
 export const ROLE_PERMISSIONS: Record<string, Permission[]> = {
-  USER: [
+  STUDENT: [
     PERMISSIONS.PROFILE_MANAGE,
     PERMISSIONS.ENROLLMENT_CREATE,
     PERMISSIONS.ENROLLMENT_VIEW_OWN,

@@ -43,9 +43,9 @@ export function Navbar() {
   const links = [
     { name: "Courses", href: "/courses" },
     { name: "Mentors", href: "/mentors" },
-    { name: "AI Tutor", href: "/ai-tutor" },
-    { name: "Pricing", href: "/pricing" },
-    { name: "Resources", href: "/blog" },
+    { name: "AI Tutor", href: "/coming-soon" },
+    { name: "Pricing", href: "/coming-soon" },
+    { name: "Resources", href: "/coming-soon" },
   ];
 
   return (
@@ -68,7 +68,7 @@ export function Navbar() {
             <div className="hidden gap-7 lg:flex items-center">
               {links.map((link) => (
                 <Link
-                  key={link.href}
+                  key={link.name}
                   href={link.href}
                   className={cn(
                     "text-[14px] font-medium transition-colors hover:text-primary",
@@ -132,7 +132,7 @@ export function Navbar() {
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild className="rounded-lg p-2.5 font-medium cursor-pointer transition-colors focus:bg-primary/5 focus:text-primary">
-                          <Link href="/settings" className="flex items-center gap-3">
+                          <Link href="/coming-soon" className="flex items-center gap-3">
                             <Settings className="h-4 w-4" />
                             Settings
                           </Link>

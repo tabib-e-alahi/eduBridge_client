@@ -3,6 +3,9 @@ import api from '@/lib/axios';
 import { ApiResponse } from '@/types';
 import { toast } from 'sonner';
 
+/**
+ * @deprecated Use hooks from useStudentData.ts instead
+ */
 export const useCreateOrder = () => {
   return useMutation({
     mutationFn: async (courseId: string) => {
@@ -15,11 +18,14 @@ export const useCreateOrder = () => {
   });
 };
 
+/**
+ * @deprecated Use hooks from useStudentData.ts instead
+ */
 export const useCheckout = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (payload: { orderId: string; transactionId: string; method: string }) => {
+    mutationFn: async (payload: { orderId: string; paymentMethod: string; transactionId?: string }) => {
       const { data } = await api.post<ApiResponse<any>>('/orders/checkout', payload);
       return data;
     },
@@ -34,6 +40,9 @@ export const useCheckout = () => {
   });
 };
 
+/**
+ * @deprecated Use hooks from useStudentData.ts instead
+ */
 export const useMyOrders = () => {
   return useQuery({
     queryKey: ['my-orders'],

@@ -88,14 +88,15 @@ export const useCheckout = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (payload: { orderId: string; paymentMethod: string }) => {
+    mutationFn: async (payload: { orderId: string; paymentMethod: string; transactionId?: string }) => {
       const { data } = await api.post<ApiResponse<any>>('/orders/checkout', payload);
       return data;
     },
     onSuccess: () => {
-      toast.success('Payment processed successfully!');
+      toast.success('Payment processed successfully! You are now enrolled.');
       queryClient.invalidateQueries({ queryKey: ['user-orders'] });
       queryClient.invalidateQueries({ queryKey: ['user-dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['my-enrollments'] });
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.message || 'Payment failed');
@@ -380,6 +381,66 @@ export const useUpdateProgress = () => {
         queryClient.invalidateQueries({ queryKey: ['course-progress', result.courseSlug] });
       }
     },
+  });
+};
+
+// =============================================
+// ASSIGNMENTS
+// =============================================
+export interface Assignment {
+  id: string;
+  title: string;
+  description: string;
+  fileUrl?: string;
+  dueDate: string;
+  courseId: string;
+  createdAt: string;
+  updatedAt: string;
+  course: {
+    title: string;
+  };
+  submissions: AssignmentSubmission[];
+}
+
+export interface AssignmentSubmission {
+  id: string;
+  assignmentId: string;
+  studentId: string;
+  content?: string;
+  fileUrl?: string;
+  grade?: number;
+  feedback?: string;
+  status: string; // PENDING, GRADED
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const useUserAssignments = () => {
+  return useQuery({
+    queryKey: ['user-assignments'],
+    queryFn: async () => {
+      const { data } = await api.get<ApiResponse<Assignment[]>>('/assignments/user');
+      return data;
+    },
+  });
+};
+
+export const useSubmitAssignment = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (payload: { assignmentId: string; content?: string; fileUrl?: string }) => {
+      const { data } = await api.post<ApiResponse<any>>('/assignments/submit', payload);
+      return data;
+    },
+    onSuccess: () => {
+      toast.success('Assignment submitted successfully');
+      queryClient.invalidateQueries({ queryKey: ['user-assignments'] });
+      queryClient.invalidateQueries({ queryKey: ['course-assignments'] });
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to submit assignment');
+    }
   });
 };
 

@@ -1,5 +1,9 @@
 import type { NextConfig } from "next";
 
+const BACKEND_ORIGIN =
+  process.env.NEXT_PUBLIC_BACKEND_BASE_URL ||
+  "http://localhost:5000";
+
 const nextConfig: NextConfig = {
   transpilePackages: ['recharts', 'es-toolkit'],
   images: {
@@ -27,6 +31,18 @@ const nextConfig: NextConfig = {
     ],
     dangerouslyAllowSVG: true,
     contentDispositionType: 'attachment',
+  },
+  async rewrites() {
+    return [
+      {
+        source: "/api/auth/:path*",
+        destination: `${BACKEND_ORIGIN}/api/auth/:path*`,
+      },
+      {
+        source: "/api/v1/:path*",
+        destination: `${BACKEND_ORIGIN}/api/v1/:path*`,
+      },
+    ];
   },
 };
 

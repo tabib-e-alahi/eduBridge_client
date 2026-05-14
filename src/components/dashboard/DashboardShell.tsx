@@ -17,33 +17,8 @@ export function DashboardShell({ children, role }: DashboardShellProps) {
   const router = useRouter();
 
   useEffect(() => {
-    if (!isPending && !session) {
-      router.push("/login");
-      return;
-    }
-
-    if (session?.user) {
-      const user = session.user as any;
-      
-      // Handle Pending Approval for Instructors
-      if (user.status === "PENDING_APPROVAL" && window.location.pathname !== "/pending-approval") {
-        router.push("/pending-approval");
-        return;
-      }
-
-      // Role-based redirection guard
-      const userRole = user.role; // STUDENT, MANAGER, ADMIN, INSTRUCTOR
-      const currentPath = window.location.pathname;
-
-      if (userRole === "STUDENT" && !currentPath.startsWith("/user")) {
-        router.push("/user");
-      } else if ((userRole === "MANAGER" || userRole === "INSTRUCTOR") && !currentPath.startsWith("/manager")) {
-        router.push("/manager");
-      } else if (userRole === "ADMIN" && !currentPath.startsWith("/admin")) {
-        router.push("/admin");
-      }
-    }
-  }, [session, isPending, router, role]);
+    // Redirection logic removed - handled by proxy.ts safeguard
+  }, [session, isPending, router]);
 
   if (isPending) return <Loading />;
   if (!session) return null;

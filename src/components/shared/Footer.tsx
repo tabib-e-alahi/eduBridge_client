@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Mail, BookOpen } from "lucide-react";
+import { Mail, BookOpen, Globe, Send } from "lucide-react";
 
 export function Footer() {
   return (
@@ -19,7 +19,7 @@ export function Footer() {
               The world's leading AI-powered learning platform. Empowering students and instructors with intelligent tools for the future of education.
             </p>
             <div className="flex items-center gap-4">
-              {[Mail, Mail, Mail].map((Icon, i) => (
+              {[Globe, Send, Mail].map((Icon, i) => (
                 <Link key={i} href="#" className="h-9 w-9 rounded-[0.625rem] border border-border flex items-center justify-center text-muted-foreground hover:text-[#1A8FE3] hover:border-[#1A8FE3]/40 hover:bg-[#1A8FE3]/5 transition-all">
                   <Icon className="w-4 h-4" />
                 </Link>
@@ -32,8 +32,8 @@ export function Footer() {
             <ul className="space-y-4">
               <li><Link href="/courses" className="text-muted-foreground hover:text-[#1A8FE3] text-sm transition-colors">Browse Courses</Link></li>
               <li><Link href="/mentors" className="text-muted-foreground hover:text-[#1A8FE3] text-sm transition-colors">Our Mentors</Link></li>
-              <li><Link href="/ai-tutor" className="text-muted-foreground hover:text-[#1A8FE3] text-sm transition-colors">AI Learning Tutor</Link></li>
-              <li><Link href="/pricing" className="text-muted-foreground hover:text-[#1A8FE3] text-sm transition-colors">Pricing Plans</Link></li>
+              <li><Link href="/coming-soon" className="text-muted-foreground hover:text-[#1A8FE3] text-sm transition-colors">AI Learning Tutor</Link></li>
+              <li><Link href="/coming-soon" className="text-muted-foreground hover:text-[#1A8FE3] text-sm transition-colors">Pricing Plans</Link></li>
             </ul>
           </div>
 
@@ -41,8 +41,8 @@ export function Footer() {
             <h3 className="text-sm font-bold text-foreground">Platform</h3>
             <ul className="space-y-4">
               <li><Link href="/about" className="text-muted-foreground hover:text-[#1A8FE3] text-sm transition-colors">About Us</Link></li>
-              <li><Link href="/blog" className="text-muted-foreground hover:text-[#1A8FE3] text-sm transition-colors">Engineering Blog</Link></li>
-              <li><Link href="/careers" className="text-muted-foreground hover:text-[#1A8FE3] text-sm transition-colors">Careers</Link></li>
+              <li><Link href="/coming-soon" className="text-muted-foreground hover:text-[#1A8FE3] text-sm transition-colors">Engineering Blog</Link></li>
+              <li><Link href="/coming-soon" className="text-muted-foreground hover:text-[#1A8FE3] text-sm transition-colors">Careers</Link></li>
               <li><Link href="/contact" className="text-muted-foreground hover:text-[#1A8FE3] text-sm transition-colors">Contact Support</Link></li>
             </ul>
           </div>

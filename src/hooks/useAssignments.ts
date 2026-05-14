@@ -3,6 +3,9 @@ import api from '@/lib/axios';
 import { ApiResponse } from '@/types';
 import { toast } from 'sonner';
 
+/**
+ * @deprecated Use Assignment from useStudentData.ts instead
+ */
 export interface Assignment {
   id: string;
   title: string;
@@ -18,6 +21,9 @@ export interface Assignment {
   submissions: AssignmentSubmission[];
 }
 
+/**
+ * @deprecated Use AssignmentSubmission from useStudentData.ts instead
+ */
 export interface AssignmentSubmission {
   id: string;
   assignmentId: string;
@@ -31,6 +37,9 @@ export interface AssignmentSubmission {
   updatedAt: string;
 }
 
+/**
+ * @deprecated Use hooks from useStudentData.ts instead
+ */
 export const useUserAssignments = () => {
   return useQuery({
     queryKey: ['user-assignments'],
@@ -41,6 +50,9 @@ export const useUserAssignments = () => {
   });
 };
 
+/**
+ * @deprecated Use hooks from useStudentData.ts instead
+ */
 export const useSubmitAssignment = () => {
   const queryClient = useQueryClient();
   
@@ -60,6 +72,9 @@ export const useSubmitAssignment = () => {
   });
 };
 
+/**
+ * @deprecated Use hooks from useInstructorData.ts instead
+ */
 export const useInstructorAssignments = () => {
   return useQuery({
     queryKey: ['instructor-assignments'],
@@ -70,6 +85,9 @@ export const useInstructorAssignments = () => {
   });
 };
 
+/**
+ * @deprecated Use hooks from useInstructorData.ts instead
+ */
 export const useCourseAssignments = (courseId: string) => {
   return useQuery({
     queryKey: ['course-assignments', courseId],
@@ -81,6 +99,9 @@ export const useCourseAssignments = (courseId: string) => {
   });
 };
 
+/**
+ * @deprecated Use hooks from useInstructorData.ts instead
+ */
 export const useCreateAssignment = () => {
   const queryClient = useQueryClient();
 
@@ -99,28 +120,33 @@ export const useCreateAssignment = () => {
   });
 };
 
+/**
+ * @deprecated Use hooks from useInstructorData.ts instead
+ */
 export const useAssignmentSubmissions = (assignmentId: string) => {
   return useQuery({
     queryKey: ['assignment-submissions', assignmentId],
     queryFn: async () => {
-      const { data } = await api.get<ApiResponse<AssignmentSubmission[]>>(`/assignments/submissions/${assignmentId}`);
+      const { data } = await api.get<ApiResponse<any[]>>(`/assignments/submissions/${assignmentId}`);
       return data;
     },
     enabled: !!assignmentId,
   });
 };
 
+/**
+ * @deprecated Use hooks from useInstructorData.ts instead
+ */
 export const useGradeSubmission = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async ({ id, payload }: { id: string, payload: { grade: number; feedback: string } }) => {
-      const { data } = await api.patch<ApiResponse<AssignmentSubmission>>(`/assignments/grade/${id}`, payload);
+      const { data } = await api.patch<ApiResponse<any>>(`/assignments/grade/${id}`, payload);
       return data;
     },
     onSuccess: (_, variables) => {
       toast.success('Submission graded successfully');
-      // Invalidate the submissions list so the new grade shows up
       queryClient.invalidateQueries({ queryKey: ['assignment-submissions'] });
       queryClient.invalidateQueries({ queryKey: ['instructor-assignments'] });
     },

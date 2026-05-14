@@ -1,22 +1,36 @@
 "use client";
 
 import { useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Mail, CheckCircle2, ArrowLeft, RefreshCw, Command } from "lucide-react";
+import { Mail, CheckCircle2, ArrowLeft, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
+import { Suspense } from "react";
 
-export default function VerifyEmailPage() {
+function VerifyEmailContent() {
   const [isResending, setIsResending] = useState(false);
+  const searchParams = useSearchParams();
+  const email = searchParams.get("email") || "";
 
-  const handleResend = () => {
+  const handleResend = async () => {
+    if (!email) {
+      toast.error("No email address found. Please register again.");
+      return;
+    }
     setIsResending(true);
-    // Better auth resend logic would go here
-    setTimeout(() => {
-      setIsResending(false);
+    try {
+      await authClient.sendVerificationEmail({
+        email,
+        callbackURL: "/login",
+      });
       toast.success("Verification email resent!");
-    }, 1500);
+    } catch {
+      toast.error("Failed to resend verification email");
+    } finally {
+      setIsResending(false);
+    }
   };
 
   return (
@@ -33,7 +47,7 @@ export default function VerifyEmailPage() {
            </div>
            <div className="space-y-1">
               <h1 className="text-3xl font-black tracking-tight">Verify Identity.</h1>
-              <p className="text-muted-foreground font-medium max-w-xs mx-auto">We've sent a secure link to your professional email address.</p>
+              <p className="text-muted-foreground font-medium max-w-xs mx-auto">We&apos;ve sent a secure link to your professional email address.</p>
            </div>
         </div>
 
@@ -53,7 +67,7 @@ export default function VerifyEmailPage() {
              className="w-full h-12 rounded-[0.75rem] font-black text-sm gap-2" 
              variant="outline"
              onClick={handleResend}
-             disabled={isResending}
+             disabled={isResending || !email}
            >
               {isResending ? (
                  <RefreshCw className="h-4 w-4 animate-spin" />
@@ -71,7 +85,7 @@ export default function VerifyEmailPage() {
                  Proceed to Login
               </Link>
            </p>
-           <Button variant="ghost" className="font-bold text-xs uppercase tracking-widest gap-2">
+           <Button variant="ghost" className="font-bold text-xs uppercase tracking-widest gap-2" asChild>
               <Link href="/login">
                  <ArrowLeft className="h-4 w-4" /> Back to Sign in
               </Link>
@@ -79,5 +93,13 @@ export default function VerifyEmailPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function VerifyEmailPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+      <VerifyEmailContent />
+    </Suspense>
   );
 }

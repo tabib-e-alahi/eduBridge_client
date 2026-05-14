@@ -7,7 +7,6 @@ export const useUserDashboard = () => {
     queryKey: ['user-dashboard'],
     queryFn: async () => {
       const { data } = await api.get<ApiResponse<any>>('/dashboard/user');
-      console.log(data);
       return data;
     },
   });

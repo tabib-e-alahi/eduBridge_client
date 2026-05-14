@@ -80,6 +80,37 @@ export default function LessonPlayerPage() {
     }
   };
 
+  const getVideoEmbedUrl = (url?: string) => {
+    if (!url) return null;
+    
+    // YouTube Short link
+    const ytShortMatch = url.match(/(?:https?:\/\/)?youtu\.be\/([^?&]+)/);
+    if (ytShortMatch) {
+      const id = ytShortMatch[1];
+      return `https://www.youtube.com/embed/${id}?autoplay=0&rel=0`;
+    }
+    
+    // YouTube Standard link
+    const ytMatch = url.match(/(?:https?:\/\/)?(?:www\.)?youtube\.com\/watch\?v=([^?&]+)/);
+    if (ytMatch) {
+      const id = ytMatch[1];
+      return `https://www.youtube.com/embed/${id}?autoplay=0&rel=0`;
+    }
+    
+    // Vimeo
+    const vimeoMatch = url.match(/(?:https?:\/\/)?(?:www\.)?vimeo\.com\/(\d+)/);
+    if (vimeoMatch) {
+      return `https://player.vimeo.com/video/${vimeoMatch[1]}`;
+    }
+    
+    return url;
+  };
+
+  const isDirectVideo = (url?: string) => {
+    if (!url) return false;
+    return !!url.match(/\.(mp4|webm|ogg)$|^https:\/\/res\.cloudinary\.com/i);
+  };
+
   if (isLoading) return <Loading />;
   if (isError) return <ErrorState onRetry={() => refetch()} />;
   if (!data) return <div className="flex h-screen items-center justify-center">No enrollment found.</div>;
@@ -168,23 +199,47 @@ export default function LessonPlayerPage() {
 
         <div className="flex-1 overflow-y-auto">
           {/* Video Player Area */}
-          <div className="w-full bg-black aspect-video max-h-[60vh] relative group flex items-center justify-center">
-            <Play className="h-24 w-24 text-white/50 group-hover:text-white group-hover:scale-110 transition-all cursor-pointer" />
-            <div className="absolute top-6 left-6 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-               <Badge className="bg-primary text-primary-foreground font-bold uppercase tracking-widest text-[10px] border-none">Lesson {currentLessonIndex + 1}</Badge>
+          <div className="w-full bg-black aspect-video max-h-[70vh] relative group flex items-center justify-center overflow-hidden">
+            {displayLesson?.videoUrl ? (
+              isDirectVideo(displayLesson.videoUrl) ? (
+                <video 
+                  key={displayLesson.id}
+                  src={displayLesson.videoUrl} 
+                  controls 
+                  className="w-full h-full"
+                  poster={data.course.thumbnailUrl}
+                />
+              ) : (
+                <iframe
+                  key={displayLesson.id}
+                  src={getVideoEmbedUrl(displayLesson.videoUrl) || ""}
+                  className="w-full h-full border-none"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              )
+            ) : (
+              <div className="flex flex-col items-center gap-4">
+                <Play className="h-24 w-24 text-white/50 group-hover:text-white group-hover:scale-110 transition-all cursor-pointer" />
+                <p className="text-white/60 font-bold uppercase tracking-widest text-xs">No video available for this lesson</p>
+              </div>
+            )}
+            
+            <div className="absolute top-6 left-6 flex items-center gap-2 pointer-events-none">
+               <Badge className="bg-primary/90 backdrop-blur-sm text-primary-foreground font-bold uppercase tracking-widest text-[10px] border-none">Lesson {currentLessonIndex + 1}</Badge>
             </div>
           </div>
 
           <div className="max-w-4xl mx-auto p-6 md:p-10 space-y-8">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
               <div className="space-y-2">
-                <h1 className="text-3xl md:text-4xl font-black tracking-tight">{displayLesson?.title}</h1>
+                <h1 className="text-2xl md:text-3xl font-black tracking-tight">{displayLesson?.title}</h1>
               </div>
               <Button 
                 onClick={() => toggleLessonCompletion(displayLesson.id, isLessonCompleted(displayLesson.id))}
                 variant={isLessonCompleted(displayLesson.id) ? "outline" : "default"}
                 className={cn(
-                  "rounded-[0.625rem] font-bold h-12 px-8 shadow-sm transition-all shrink-0 w-full md:w-auto",
+                  "rounded-[0.625rem] font-bold h-12 px-8 shadow-sm text-white transition-all shrink-0 w-full md:w-auto",
                   !isLessonCompleted(displayLesson.id) && "bg-primary hover:bg-primary/90 hover:shadow-md hover:-translate-y-0.5",
                   isLessonCompleted(displayLesson.id) && "border-emerald-500 text-emerald-500 hover:bg-emerald-500/10"
                 )}
@@ -255,7 +310,7 @@ export default function LessonPlayerPage() {
                  </h4>
                  <div className="p-4 rounded-[0.625rem] bg-muted/30 border border-muted flex flex-col gap-3">
                     <p className="text-xs font-medium text-muted-foreground">Stuck on this lesson? Ask the AI Tutor for clarification.</p>
-                    <Button size="sm" className="w-full rounded-[0.5rem] font-bold gap-2">
+                    <Button size="sm" className="w-full rounded-[0.5rem] font-bold gap-2 text-white">
                       <MessageSquare className="h-4 w-4" /> Open Chat
                     </Button>
                  </div>
@@ -267,20 +322,27 @@ export default function LessonPlayerPage() {
                    <Download className="h-3 w-3" /> Resources
                  </h4>
                  <div className="space-y-2">
-                    <button className="w-full flex items-center gap-3 p-3 rounded-[0.625rem] border hover:bg-muted/50 transition-colors group text-left">
-                       <FileText className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
-                       <div className="flex-1 min-w-0">
-                          <p className="text-sm font-bold truncate">Lesson Slides</p>
-                          <p className="text-[10px] text-muted-foreground font-medium">PDF • 2.4 MB</p>
-                       </div>
-                    </button>
-                    <button className="w-full flex items-center gap-3 p-3 rounded-[0.625rem] border hover:bg-muted/50 transition-colors group text-left">
-                       <FileText className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
-                       <div className="flex-1 min-w-0">
-                          <p className="text-sm font-bold truncate">Starter Code</p>
-                          <p className="text-[10px] text-muted-foreground font-medium">ZIP • 1.1 MB</p>
-                       </div>
-                    </button>
+                    {displayLesson?.resources?.length > 0 ? (
+                      displayLesson.resources.map((resource: any) => (
+                        <a 
+                          key={resource.id}
+                          href={resource.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="w-full flex items-center gap-3 p-3 rounded-[0.625rem] border hover:bg-muted/50 transition-colors group text-left"
+                        >
+                           <FileText className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
+                           <div className="flex-1 min-w-0">
+                              <p className="text-sm font-bold truncate">{resource.title}</p>
+                              <p className="text-[10px] text-muted-foreground font-medium">External Link</p>
+                           </div>
+                        </a>
+                      ))
+                    ) : (
+                      <div className="p-4 rounded-[0.625rem] border border-dashed text-center">
+                        <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">No resources available</p>
+                      </div>
+                    )}
                  </div>
               </div>
 
