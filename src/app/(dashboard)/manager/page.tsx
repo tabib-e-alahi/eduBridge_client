@@ -9,8 +9,9 @@ import {
   MessageSquare,
   Plus,
   TrendingUp,
-  Award,
-  ExternalLink
+  ExternalLink,
+  Check,
+  AlertTriangle
 } from "lucide-react";
 import {
   Bar,
@@ -27,7 +28,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { PageHeader } from "@/components/dashboard/PageHeader";
 import { cn } from "@/lib/utils";
 
 import { useAuth } from "@/lib/auth-client";
@@ -51,7 +51,52 @@ export default function InstructorDashboardPage() {
   if (isError) return <ErrorState onRetry={() => refetch()} />;
 
   const { stats, courses, recentEnrollments, recentReviews, charts } = dashboardData?.data || {};
-  const COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#8b5cf6", "#ef4444"];
+  const COLORS = [
+    "hsl(var(--primary))",
+    "hsl(160 84% 39%)",
+    "hsl(38 92% 50%)",
+    "hsl(var(--accent))",
+    "hsl(0 84% 60%)",
+  ];
+  const courseCount = courses?.length || 0;
+  const atRiskCount = stats?.atRiskCount || 0;
+  const onboarding = stats?.onboarding;
+  const formatTrend = (current = 0, last = 0, suffix = "") => {
+    if (!last && !current) return { label: "No change", className: "text-muted-foreground" };
+    if (!last) return { label: `+100${suffix || "%"}`, className: "text-emerald-600" };
+    const change = ((current - last) / last) * 100;
+    return {
+      label: `${change >= 0 ? "+" : ""}${change.toFixed(1)}${suffix || "%"}`,
+      className: change >= 0 ? "text-emerald-600" : "text-red-600",
+    };
+  };
+
+  const statCards = [
+    {
+      label: "Total Revenue",
+      value: `$${(stats?.totalRevenue || 0).toLocaleString()}`,
+      icon: TrendingUp,
+      trend: formatTrend(stats?.comparisons?.revenue.currentMonth, stats?.comparisons?.revenue.lastMonth),
+    },
+    {
+      label: "Active Students",
+      value: stats?.totalStudents || 0,
+      icon: Users,
+      trend: formatTrend(stats?.comparisons?.students.currentMonth, stats?.comparisons?.students.lastMonth),
+    },
+    {
+      label: "Avg. Rating",
+      value: stats?.avgRating || 0,
+      icon: Star,
+      trend: formatTrend(stats?.comparisons?.rating.currentMonth, stats?.comparisons?.rating.lastMonth),
+    },
+    {
+      label: "Total Reviews",
+      value: stats?.totalReviews || 0,
+      icon: MessageSquare,
+      trend: formatTrend(stats?.comparisons?.reviews.currentMonth, stats?.comparisons?.reviews.lastMonth),
+    },
+  ];
 
   return (
     <div className="flex flex-col gap-8">
@@ -59,7 +104,7 @@ export default function InstructorDashboardPage() {
       {/* Header Section */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-foreground">Studio</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Studio</h1>
           <p className="text-sm text-muted-foreground mt-1">
             Overview of your performance and recent activity.
           </p>
@@ -76,28 +121,69 @@ export default function InstructorDashboardPage() {
         </div>
       </div>
 
+      {courseCount === 0 && (
+        <div className="rounded-xl border border-dashed bg-card p-8 shadow-sm">
+          <h3 className="text-lg font-semibold mb-4">Get Started</h3>
+          <div className="space-y-3">
+            {[
+              { done: Boolean(onboarding?.hasProfile), label: "Complete your instructor profile", href: "/manager/profile" },
+              { done: Boolean(onboarding?.hasCourse), label: "Create your first course", href: "/manager/courses/create" },
+              { done: Boolean(onboarding?.hasAIExplored), label: "Try the AI Studio", href: "/manager/ai-tools" },
+            ].map((step) => (
+              <Link
+                key={step.label}
+                href={step.href}
+                className="flex items-center gap-3 rounded-lg p-3 transition-colors hover:bg-muted"
+              >
+                <div
+                  className={cn(
+                    "flex h-5 w-5 items-center justify-center rounded-full border-2",
+                    step.done ? "border-primary bg-primary" : "border-muted-foreground"
+                  )}
+                >
+                  {step.done && <Check className="h-3 w-3 text-primary-foreground" />}
+                </div>
+                <span className={cn("text-sm", step.done && "text-muted-foreground line-through")}>
+                  {step.label}
+                </span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {atRiskCount > 0 && (
+        <div className="flex flex-col gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-950/30 md:flex-row md:items-center">
+          <AlertTriangle className="h-5 w-5 shrink-0 text-amber-600" />
+          <div>
+            <p className="text-sm font-semibold text-amber-800 dark:text-amber-200">
+              {atRiskCount} students haven't started yet
+            </p>
+            <p className="text-xs text-amber-700 dark:text-amber-300">
+              Consider sending an announcement to re-engage them.
+            </p>
+          </div>
+          <Button variant="outline" size="sm" className="md:ml-auto" asChild>
+            <Link href="/manager/announcements">Send Announcement</Link>
+          </Button>
+        </div>
+      )}
+
       {/* Stats Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {[
-          { label: "Total Revenue", value: `$${stats?.totalRevenue?.toLocaleString() || '0'}`, icon: TrendingUp, trend: "+12.5%", trendColor: "text-emerald-600" },
-          { label: "Active Students", value: stats?.totalStudents || 0, icon: Users, trend: "+5.2%", trendColor: "text-emerald-600" },
-          { label: "Avg. Rating", value: stats?.avgRating || 0, icon: Star, trend: "Stable", trendColor: "text-muted-foreground" },
-          { label: "Total Reviews", value: stats?.totalReviews || 0, icon: MessageSquare, trend: "+8.1%", trendColor: "text-emerald-600" },
-        ].map((stat, i) => (
+        {statCards.map((stat, i) => (
           <div 
             key={i} 
-            className="rounded-xl border bg-card text-card-foreground shadow-sm p-6 transition-colors hover:border-border/80"
+            className="rounded-xl border bg-card p-6 shadow-sm transition-shadow hover:shadow-md"
           >
-            <div className="flex flex-row items-center justify-between pb-2">
-              <span className="text-sm font-medium text-muted-foreground">{stat.label}</span>
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">{stat.label}</p>
               <stat.icon className="h-4 w-4 text-muted-foreground" />
             </div>
-            <div className="flex items-baseline gap-2">
-              <div className="text-2xl font-bold tracking-tight">{stat.value}</div>
-              <span className={cn("text-xs font-medium", stat.trendColor)}>
-                {stat.trend}
-              </span>
-            </div>
+            <p className="text-2xl font-bold tabular-nums">{stat.value}</p>
+            <p className={cn("mt-1 text-xs font-medium", stat.trend.className)}>
+              {stat.trend.label} this month
+            </p>
           </div>
         ))}
       </div>

@@ -102,7 +102,7 @@ export default function Home() {
                       alt="User" 
                       fill 
                       sizes="32px"
-
+                      priority
                     />
                   </div>
                 ))}

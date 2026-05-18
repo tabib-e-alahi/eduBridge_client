@@ -246,9 +246,9 @@ export default function AILearningPathPage() {
                            </div>
                         </div>
                         
-                        <Button className="w-full font-bold h-11 flex items-center justify-center gap-2">
-                           <Save className="h-4 w-4" /> Save to Profile
-                        </Button>
+                        <div className="flex items-center gap-2 text-xs font-bold text-emerald-500 bg-emerald-500/10 rounded-xl p-3 justify-center w-full">
+                           <CheckCircle2 className="h-4 w-4 shrink-0" /> Saved to Profile
+                        </div>
                      </div>
                   </div>
 

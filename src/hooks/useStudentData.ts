@@ -612,3 +612,55 @@ export const useLearningSummary = () => {
     },
   });
 };
+
+// =============================================
+// SAVED COURSES
+// =============================================
+
+export interface SavedCourse {
+  id: string;
+  courseId: string;
+  userId: string;
+  createdAt: string;
+  course: {
+    id: string;
+    title: string;
+    slug: string;
+    thumbnailUrl?: string;
+    price: number;
+    level: string;
+    category: { name: string };
+    instructor: { name: string };
+    _count: { enrollments: number; reviews: number };
+  };
+}
+
+export const useMySavedCourses = () => {
+  return useQuery({
+    queryKey: ['my-saved-courses'],
+    queryFn: async () => {
+      const { data } = await api.get<ApiResponse<SavedCourse[]>>('/courses/saved');
+      return data;
+    },
+  });
+};
+
+export const useToggleSaveCourse = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (courseId: string) => {
+      const { data } = await api.post<ApiResponse<{ saved: boolean }>>('/courses/saved/toggle', { courseId });
+      return data;
+    },
+    onSuccess: (result) => {
+      const msg = result.data?.saved ? 'Course saved!' : 'Course removed from saved.';
+      toast.success(msg);
+      queryClient.invalidateQueries({ queryKey: ['my-saved-courses'] });
+      queryClient.invalidateQueries({ queryKey: ['user-dashboard'] });
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Action failed');
+    },
+  });
+};

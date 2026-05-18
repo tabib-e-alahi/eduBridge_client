@@ -43,9 +43,9 @@ export function Navbar() {
   const links = [
     { name: "Courses", href: "/courses" },
     { name: "Mentors", href: "/mentors" },
+    { name: "Blog", href: "/blog" },
     { name: "AI Tutor", href: "/coming-soon" },
     { name: "Pricing", href: "/coming-soon" },
-    { name: "Resources", href: "/coming-soon" },
   ];
 
   return (

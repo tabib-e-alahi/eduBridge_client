@@ -1,16 +1,15 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useInstructorStudents } from "@/hooks/useInstructorData";
 import { Loading } from "@/components/shared/Loading";
 import { ErrorState } from "@/components/shared/ErrorState";
 import { 
-  Users, 
   Search, 
   Filter, 
   Mail, 
   Calendar, 
-  BookOpen, 
   TrendingUp, 
   MoreVertical,
   MessageCircle,
@@ -92,7 +91,12 @@ export default function InstructorStudentsPage() {
                         </AvatarFallback>
                       </Avatar>
                       <div className="min-w-0">
-                        <p className="text-sm font-black truncate group-hover:text-primary transition-colors">{enrollment.user.name}</p>
+                        <Link
+                          href={`/manager/students/${enrollment.user.id}`}
+                          className="text-sm font-black truncate group-hover:text-primary transition-colors"
+                        >
+                          {enrollment.user.name}
+                        </Link>
                         <p className="text-[10px] font-bold text-muted-foreground truncate uppercase">{enrollment.user.email}</p>
                       </div>
                     </div>
@@ -136,8 +140,10 @@ export default function InstructorStudentsPage() {
                              <DropdownMenuItem className="gap-2 cursor-pointer">
                                 <Mail className="h-4 w-4" /> Send Email Notification
                              </DropdownMenuItem>
-                             <DropdownMenuItem className="gap-2 cursor-pointer">
-                                <TrendingUp className="h-4 w-4" /> View Detailed Analytics
+                             <DropdownMenuItem className="gap-2 cursor-pointer" asChild>
+                                <Link href={`/manager/students/${enrollment.user.id}`}>
+                                  <TrendingUp className="h-4 w-4" /> View Detailed Analytics
+                                </Link>
                              </DropdownMenuItem>
                              <DropdownMenuSeparator />
                              <DropdownMenuItem className="gap-2 text-destructive cursor-pointer">

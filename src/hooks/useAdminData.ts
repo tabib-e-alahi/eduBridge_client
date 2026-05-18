@@ -157,3 +157,107 @@ export const useUpdateCourseStatus = () => {
     },
   });
 };
+
+// =============================================
+// SUPPORT TICKETS (Admin View)
+// =============================================
+
+export interface SupportTicket {
+  id: string;
+  description: string;
+  targetType: string;
+  status: 'OPEN' | 'IN_REVIEW' | 'RESOLVED' | 'REJECTED';
+  createdAt: string;
+  updatedAt: string;
+  reporter: {
+    id: string;
+    name: string;
+    email: string;
+    image?: string;
+  };
+}
+
+export const useAdminSupportTickets = () => {
+  return useQuery({
+    queryKey: ['admin-support-tickets'],
+    queryFn: async () => {
+      const { data } = await api.get<ApiResponse<SupportTicket[]>>('/admin/reports?type=SUPPORT_TICKET');
+      return data;
+    },
+  });
+};
+
+export const useUpdateSupportTicketStatus = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+      const { data } = await api.patch<ApiResponse<any>>(`/admin/reports/${id}/status`, { status });
+      return data;
+    },
+    onSuccess: () => {
+      toast.success('Ticket status updated');
+      queryClient.invalidateQueries({ queryKey: ['admin-support-tickets'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-reports'] });
+    },
+  });
+};
+
+// =============================================
+// ANNOUNCEMENTS (Admin Broadcast)
+// =============================================
+
+export const useCreateAnnouncement = () => {
+  return useMutation({
+    mutationFn: async (payload: { title: string; message: string; type?: string }) => {
+      const { data } = await api.post<ApiResponse<any>>('/notifications/announce', payload);
+      return data;
+    },
+    onSuccess: () => {
+      toast.success('Announcement broadcast to all users!');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to send announcement');
+    },
+  });
+};
+
+// =============================================
+// SYSTEM SETTINGS
+// =============================================
+
+export interface SystemSetting {
+  id: string;
+  key: string;
+  value: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const useSystemSettings = () => {
+  return useQuery({
+    queryKey: ['system-settings'],
+    queryFn: async () => {
+      const { data } = await api.get<ApiResponse<SystemSetting[]>>('/admin/settings');
+      return data;
+    },
+  });
+};
+
+export const useUpdateSystemSetting = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ key, value }: { key: string; value: string }) => {
+      const { data } = await api.patch<ApiResponse<SystemSetting>>(`/admin/settings/${key}`, { value });
+      return data;
+    },
+    onSuccess: () => {
+      toast.success('Setting updated successfully');
+      queryClient.invalidateQueries({ queryKey: ['system-settings'] });
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to update setting');
+    },
+  });
+};

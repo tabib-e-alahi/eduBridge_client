@@ -4,13 +4,9 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { 
-  GraduationCap, 
   Star, 
   Users, 
   Search, 
-  ArrowRight,
-  MessageSquare,
-  Globe,
   Filter,
   Award,
   ChevronRight
@@ -177,7 +173,7 @@ export default function MentorsPage() {
       {/* Final CTA */}
       <section className="py-24 bg-[#FDFCF8] dark:bg-[#262626] border-t border-border mt-auto">
         <div className="container mx-auto px-4 md:px-6">
-           <div className="max-w-4xl mx-auto bg-primary rounded-2xl p-10 md:p-16 text-center text-primary-foreground shadow-xl shadow-primary/20 space-y-8 relative overflow-hidden">
+           <div className="max-w-4xl mx-auto bg-primary rounded-2xl p-10 md:p-16 text-center text-primary-foreground  space-y-8 relative overflow-hidden">
               <div className="relative z-10 space-y-4">
                  <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight">Become a Mentor</h2>
                  <p className="text-lg text-primary-foreground/80 font-medium max-w-2xl mx-auto">
@@ -185,10 +181,10 @@ export default function MentorsPage() {
                  </p>
               </div>
               <div className="flex flex-wrap justify-center gap-4 relative z-10">
-                 <Button size="lg" className="bg-white text-primary hover:bg-white/90 font-bold h-14 px-8 rounded-xl">
+                 <Button size="lg" className="bg-white text-primary font-bold h-14 px-8 rounded-xl">
                    Apply Now
                  </Button>
-                 <Button size="lg" variant="outline" className="border-white/20 hover:bg-white/10 text-white font-bold h-14 px-8 rounded-xl">
+                 <Button size="lg" variant="outline" className="font-bold text-black hover:text-black h-14 px-8 rounded-xl">
                    Learn More
                  </Button>
               </div>

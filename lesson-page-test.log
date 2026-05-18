@@ -1,0 +1,18 @@
+
+> edubridge_frontend@0.1.0 dev
+> next dev -p 3007
+
+▲ Next.js 16.2.5 (Turbopack)
+- Local:         http://localhost:3007
+- Network:       http://192.168.0.6:3007
+- Environments: .env
+✓ Ready in 3.0s
+⨯ Another next dev server is already running.
+
+- Local:        http://localhost:3000
+- PID:          3496
+- Dir:          D:\next-lvl\stn\edubridge\eduBridge_client
+- Log:          .next\dev\logs\next-development.log
+
+Run taskkill /PID 3496 /F to stop it.
+[?25h

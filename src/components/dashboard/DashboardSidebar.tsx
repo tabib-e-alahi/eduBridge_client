@@ -5,8 +5,6 @@ import { usePathname, useRouter } from "next/navigation";
 import { 
   LayoutDashboard, 
   BookOpen, 
-  Clock, 
-  CheckSquare, 
   MessageSquare, 
   Award, 
   Settings,
@@ -16,14 +14,30 @@ import {
   PlayCircle,
   FileText,
   Map,
-  Users
+  Users,
+  Megaphone,
+  Sparkles,
+  DollarSign,
+  Star,
+  Video,
+  UserCircle,
+  PenTool
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth, authClient } from "@/lib/auth-client";
+import type { LucideIcon } from "lucide-react";
 
 interface SidebarProps {
   role: "USER" | "ADMIN" | "MANAGER";
   className?: string;
+}
+
+interface SidebarLink {
+  label: string;
+  icon: LucideIcon;
+  href: string;
+  badge?: "AI";
+  dividerBefore?: boolean;
 }
 
 export function DashboardSidebar({ role, className }: SidebarProps) {
@@ -40,7 +54,7 @@ export function DashboardSidebar({ role, className }: SidebarProps) {
     });
   };
 
-  const studentLinks = [
+  const studentLinks: SidebarLink[] = [
     { label: "Overview", icon: LayoutDashboard, href: "/user" },
     { label: "My Courses", icon: BookOpen, href: "/user/courses" },
     { label: "Live Sessions", icon: PlayCircle, href: "/user/classes" },
@@ -50,19 +64,30 @@ export function DashboardSidebar({ role, className }: SidebarProps) {
     { label: "Certificates", icon: Award, href: "/user/certificates" },
   ];
 
-  const instructorLinks = [
+  const instructorLinks: SidebarLink[] = [
     { label: "Studio", icon: LayoutDashboard, href: "/manager" },
-    { label: "My Curriculum", icon: BookOpen, href: "/manager/courses" },
-    { label: "Grading", icon: FileText, href: "/manager/assignments" },
+    { label: "Courses", icon: BookOpen, href: "/manager/courses" },
+    { label: "AI Studio", icon: Sparkles, href: "/manager/ai-tools", badge: "AI" },
+    { label: "Earnings", icon: DollarSign, href: "/manager/earnings" },
     { label: "Students", icon: Users, href: "/manager/students" },
+    { label: "Assignments", icon: FileText, href: "/manager/assignments" },
+    { label: "Live Classes", icon: Video, href: "/manager/classes" },
+    { label: "Reviews", icon: Star, href: "/manager/reviews" },
+    { label: "Announcements", icon: Megaphone, href: "/manager/announcements" },
+    { label: "My Profile", icon: UserCircle, href: "/manager/profile" },
+    { label: "Messages", icon: MessageSquare, href: "/manager/messages", dividerBefore: true },
+    { label: "Blog", icon: PenTool, href: "/manager/blog" },
   ];
 
-  const adminLinks = [
+  const adminLinks: SidebarLink[] = [
     { label: "System", icon: LayoutDashboard, href: "/admin" },
     { label: "Users", icon: Users, href: "/admin/users" },
     { label: "Instructors", icon: Award, href: "/admin/instructors" },
     { label: "Courses", icon: BookOpen, href: "/admin/courses" },
+    { label: "Support Tickets", icon: HelpCircle, href: "/admin/support" },
+    { label: "Broadcast", icon: Megaphone, href: "/admin/announcements" },
     { label: "Analytics", icon: FileText, href: "/admin/analytics" },
+    { label: "Settings", icon: Settings, href: "/admin/settings" },
   ];
 
   const currentLinks = role === "ADMIN" ? adminLinks : role === "MANAGER" ? instructorLinks : studentLinks;
@@ -87,17 +112,24 @@ export function DashboardSidebar({ role, className }: SidebarProps) {
         {currentLinks.map((item) => {
           const isActive = pathname === item.href;
           return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "sidebar-item",
-                isActive ? "sidebar-item-active" : "sidebar-item-inactive"
-              )}
-            >
-              <item.icon className={cn("h-4 w-4", isActive ? "text-primary" : "text-muted-foreground")} />
-              {item.label}
-            </Link>
+            <div key={item.href}>
+              {item.dividerBefore && <div className="my-3 border-t border-border" />}
+              <Link
+                href={item.href}
+                className={cn(
+                  "sidebar-item",
+                  isActive ? "sidebar-item-active" : "sidebar-item-inactive"
+                )}
+              >
+                <item.icon className={cn("h-4 w-4", isActive ? "text-primary" : "text-muted-foreground")} />
+                <span>{item.label}</span>
+                {item.badge === "AI" && (
+                  <span className="ml-auto rounded-full bg-violet-500/15 px-1.5 py-0.5 text-[9px] font-bold text-violet-600">
+                    AI
+                  </span>
+                )}
+              </Link>
+            </div>
           );
         })}
 

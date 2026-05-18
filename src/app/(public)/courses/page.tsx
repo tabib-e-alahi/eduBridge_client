@@ -71,7 +71,7 @@ function CoursesContent() {
   return (
     <div className="bg-background min-h-screen pb-20">
       {/* Header Banner */}
-      <div className="bg-card border-b border-border pt-32 pb-12">
+      <div className=" border-b border-border pt-32 pb-12">
         <div className="container mx-auto px-4 md:px-6">
           <div className="max-w-3xl space-y-4">
             <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-foreground">Explore Courses</h1>
@@ -206,7 +206,7 @@ function CoursesContent() {
               </div>
             ) : (
               <>
-                <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
                   {data?.data.map((course) => (
                     <div key={course.id} className="saas-card flex flex-col rounded-[0.625rem] overflow-hidden group">
                       <Link href={`/courses/${course.slug}`} className="relative aspect-video overflow-hidden block">
@@ -257,7 +257,7 @@ function CoursesContent() {
                 </div>
 
                 {/* Pagination */}
-                {data?.meta && data.meta.totalPage > 1 && (
+                {data?.meta && data.meta.totalPage > 0 && (
                    <div className="flex justify-center items-center mt-12 gap-1 border-t border-border pt-8">
                       <Button 
                         variant="ghost" 
